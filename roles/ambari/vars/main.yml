@@ -1,0 +1,6 @@
+rds_ambari_password: asdf1234
+rds_hive_password: asdf1234
+rds_oozie_password: asdf1234
+rds_rangeradmin_password: asdf1234
+rds_rangeraudit_password: asdf1234
+drop_databases: False

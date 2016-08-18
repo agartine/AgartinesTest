@@ -1,0 +1,8 @@
+---
+- hosts: localhost
+  vars:
+    oozie_env_content: "{{ lookup('file','oozie-env-content.txt').replace('{{ keystore_password }}', keystore_password) }}"
+    cluster_env: "{{ lookup('ENV', 'ENVIRONMENT') }}"
+  tasks:
+  - name: Generate ambari config settings
+    template: src=ambari-datalake-config.json dest=./ambari-datalake-{{ cluster_env }}-config.json

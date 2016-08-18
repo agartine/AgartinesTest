@@ -1,0 +1,9 @@
+# {{ ansible_managed }}
+127.0.0.1  localhost.localdomain localhost
+::1        localhost.localdomain localhost
+
+{% for item in play_hosts %}
+{% set short_name_arr = [ hostvars[item]['ec2_tag_NodeType']|lower, hostvars[item]['ec2_private_ip_address'].split('.')[3] ] %} 
+{% set long_name_arr = [ short_name_arr|join("-"), hostvars[item]['ec2_tag_Environment']|lower, datalake_name, "datalake"] %}
+{{ hostvars[item]['ec2_private_ip_address'] }} {{ long_name_arr|join(".")}}
+{% endfor %}

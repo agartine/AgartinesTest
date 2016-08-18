@@ -1,0 +1,182 @@
+# Use cloudformation to create a new datalake block
+# Then spin up appropriate EC2 instances inside
+# Then configure instances
+# parse out a plain vanilla
+
+# Must specify EC2_REGION as env variable
+---
+- hosts: localhost
+  connection: local
+  gather_facts: true
+  vars_prompt:
+    - name: rds_master_password
+      prompt: "RDS master password"
+      default: "asdf1234"
+      private: true
+      confirm: true
+
+  vars:
+    tenancy: default      # set to 'dedicated' for HIPAA regulated environments
+    rds_multi_az: False   # set to true for production environments
+    vpn_key_name: "{{ lookup('env','VPN_KEY_NAME') }}"
+    ca_key_name: "{{ lookup('env', 'CA_KEY_NAME')  }}"
+    cluster_node_key_name: "{{ lookup('env', 'CLUSTER_NODE_KEY_NAME') }}"
+    cluster_env: "{{ lookup('env', 'ENVIRONMENT') }}"
+    datalake_name: "{{ lookup('env', 'DATALAKE_NAME') }}"
+    vpc_base: "{{ lookup('env', 'VPC_BASE') }}"
+    subnet_base: "{{ lookup('env', 'SUBNET_BASE') }}"
+    create_hue: False
+    ec2_hue_ami: ami-6df50a0d
+    ec2_node_ami: ami-5af40b3a
+    ec2_ca_ami: ami-6b7ab10b
+  tasks:
+
+  ############################################################
+  # first provision the datalake via cloudformation template #
+  ############################################################
+  - template: src=cloudformation/datalake-vpc-foundation.template dest="./datalake-vpc-foundation-{{ datalake_name }}.json"
+
+  - name: VPC foundation pre-requisite (Subnets, VPNs)
+    cloudformation:
+      # TODO: change name to datalake-foundation
+      stack_name: "datalake-{{ datalake_name }}"
+      template: "./datalake-vpc-foundation-{{ datalake_name }}.json"
+      tags:
+        Stack: "datalake-{{ datalake_name }}"
+    register: foundation_stack
+
+  - set_fact:
+      vpc_id: "{{ foundation_stack.stack_outputs['VPC'] }}"  
+      route_table_nat_a: "{{ foundation_stack.stack_outputs['RouteTableInternalNatA']}}"
+      route_table_nat_b: "{{ foundation_stack.stack_outputs['RouteTableInternalNatB']}}"
+      # TODO: parameterize first 2 octets
+      # default VPC CIDR is 10.101.0.0/16
+      cidr_subnet_cluster_a: "{{ vpc_base }}.{{ subnet_base }}.0/24"
+      cidr_subnet_cluster_b: "{{ vpc_base }}.{{ subnet_base|int + 1 }}.0/24"
+      cidr_subnet_rds_a: "{{ vpc_base }}.{{ subnet_base|int + 2 }}.0/24"
+      cidr_subnet_rds_b: "{{ vpc_base }}.{{ subnet_base|int + 3 }}.0/24"
+
+  # generate the cloudformation block with correct subnets
+  - template: src=cloudformation/datalake-cloudformation.template dest=./datalake-{{ cluster_env }}-cloudformation.json
+
+  # - name: rds_kms_key
+  # TODO: generate master key / get GUID
+
+  - name: Launch datalake block
+    cloudformation:
+      stack_name: "datalake-{{ datalake_name }}-{{ cluster_env }}"
+      template: "./datalake-{{ cluster_env }}-cloudformation.json"
+      template_parameters:
+        00DatalakeVPC: "{{ vpc_id }}"
+        00RdsIdentifier: "{{ datalake_name }}-{{ cluster_env }}"
+        02RDSMasterPassword: "{{ rds_master_password }}"
+      tags:
+        Stack: "{{ datalake_name }}-{{ cluster_env }}"
+    register: datalake_stack
+
+  - set_fact:
+      dl_subnet: "{{ datalake_stack.stack_outputs['DatalakeSubnetA'] }}"
+      pg_a : "{{ datalake_stack.stack_outputs['ClusterPlacementGroupA'] }}"
+      pg_b : "{{ datalake_stack.stack_outputs['ClusterPlacementGroupB'] }}"
+      cluster_security_group_id: "{{ datalake_stack.stack_outputs['ClusterSecurityGroup'] }}"
+
+  - name: Provision Name Node
+    local_action:
+      module: ec2
+      key_name: "{{ cluster_node_key_name }}"
+      group_id: "{{ cluster_security_group_id }}"
+      instance_type: c4.8xlarge
+      image: "{{ ec2_node_ami }}"
+      ebs_optimized: true
+      exact_count: 1
+      count_tag: 
+        NodeType: NameNode
+        Environment: "{{ cluster_env }}"
+      placement_group: "{{ pg_a }}"
+      monitoring: yes
+      tenancy: "{{ tenancy }}"
+      vpc_subnet_id: "{{ dl_subnet }}"
+      assign_public_ip: no
+      instance_tags:
+        Name: "{{ datalake_name }}-{{ cluster_env }}-NameNode"
+        NodeType: NameNode
+        Environment: "{{ cluster_env }}"
+      wait: yes
+    register: nameNodes
+
+  - name: Provision Ambari Node
+    local_action:
+      module: ec2
+      key_name: "{{ cluster_node_key_name }}"
+      group_id: "{{ cluster_security_group_id }}"
+      instance_type: c4.8xlarge
+      image: "{{ ec2_node_ami }}"
+      ebs_optimized: true
+      exact_count: 1
+      count_tag: 
+        Services: Ambari
+        Environment: "{{ cluster_env }}"
+      placement_group:  "{{ pg_a }}"
+      monitoring: yes
+      tenancy: "{{ tenancy }}"
+      vpc_subnet_id: "{{ dl_subnet }}"
+      assign_public_ip: no
+      instance_tags:
+        Name: "{{ datalake_name }}-{{ cluster_env }}-Ambari"
+        NodeType: DataNode
+        Environment: "{{ cluster_env }}"
+        Services: Ambari
+      wait: yes
+    register: ambariNodes
+
+  - name: Provision Data Nodes
+    local_action:
+      module: ec2
+      key_name: "{{ cluster_node_key_name }}"
+      group_id: "{{ cluster_security_group_id }}"
+      instance_type: c4.8xlarge
+      image: "{{ ec2_node_ami }}"
+      ebs_optimized: true
+      exact_count: 3
+      count_tag:
+        NodeType: DataNode
+        Environment: "{{ cluster_env }}"
+      placement_group: "{{ pg_a }}"
+      monitoring: yes
+      tenancy: "{{ tenancy }}"
+      vpc_subnet_id: "{{ dl_subnet }}"
+      assign_public_ip: no
+      instance_tags:
+        Name: "{{ datalake_name }}-{{ cluster_env }}-DataNode"
+        NodeType: DataNode
+        Environment: "{{ cluster_env }}"
+      wait: yes
+    register: dataNodes
+
+  - name: Provision Hue node(s)
+    local_action:
+      module: ec2
+      key_name: "{{ cluster_node_key_name }}"
+      group_id: "{{ cluster_security_group_id }}"
+      instance_type: m4.xlarge
+      image: "{{ ec2_hue_ami }}"
+      ebs_optimized: yes
+      exact_count: 1
+      count_tag:
+        Services: Hue
+      placement_group: "{{ pg_a }}"
+      monitoring: yes
+      tenancy: "{{ tenancy }}"
+      vpc_subnet_id: "{{ dl_subnet }}"
+      assign_public_ip: no
+      instance_tags:
+        Name: "{{ datalake_name }}-{{ cluster_env }}-Hue"
+        NodeType: EdgeNode
+        Environment: "{{ cluster_env }}"
+        Services: Hue
+      wait: yes
+    register: hueNodes
+    when: "{{ create_hue }} == True"
+
+  post_tasks:
+    - meta: refresh_inventory

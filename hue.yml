@@ -1,0 +1,17 @@
+# Must specify EC2_REGION as env variable
+---
+- hosts: "tag_Name_{{ datalake_name }}_{{ cluster_env }}_Hue:&tag_Environment_{{ cluster_env }}:&tag_Services_Hue"
+  vars:
+    datalake_name: "{{ lookup('env', 'DATALAKE_NAME') }}"
+    cluster_name: "{{ lookup('env', 'CLUSTER_NAME') }}"
+    cluster_env: "{{ lookup('env', 'ENVIRONMENT') }}"
+    rds_hostname: "{{ lookup('env', 'RDS_HOST') }}"
+    rds_master_username: master
+    rds_master_password: asdf1234
+    rds_hue_password: asdf1234
+    ambari_hostname: "{{ lookup('env', 'AMBARI_HOSTNAME') }}"
+  gather_facts: true
+  become: yes
+  remote_user: centos
+  roles:
+    - hue

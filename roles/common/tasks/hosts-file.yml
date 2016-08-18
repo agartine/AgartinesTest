@@ -1,0 +1,19 @@
+- set_fact:
+    datalake_shortname: "{{ hostvars[ansible_eth0.ipv4.address].ec2_tag_NodeType|lower }}-{{ ansible_eth0.ipv4.address.split('.')[3] }}"
+    datalake_hostname: "{{ hostvars[ansible_eth0.ipv4.address].ec2_tag_NodeType|lower }}-{{ ansible_eth0.ipv4.address.split('.')[3] }}.{{ hostvars[ansible_eth0.ipv4.address].ec2_tag_Environment|lower }}.{{ datalake_name }}.datalake"
+
+- name: Create hosts file
+  template: src=etc/hosts.j2 dest=/etc/hosts
+
+- name: Update sysconfig/network file to persist hostname
+  template: src=etc/sysconfig/network.j2 dest=/etc/sysconfig/network
+
+- name: Update /etc/hostname file
+  template: src=etc/hostname.j2 dest=/etc/hostname
+
+- name: update cloud init file that overrides the hostnames on start
+  template: src=etc/cloud/cloud.cfg.d/99_hostname.cfg.j2 dest=/etc/cloud/cloud.cfg.d/99_hostname.cfg
+
+- name: Set hostname on each instance
+  hostname: 
+    name: "{{ datalake_hostname}}"

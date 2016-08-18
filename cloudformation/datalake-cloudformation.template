@@ -1,0 +1,281 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Resources": {
+   "S3Bucket" : {
+       "Type" : "AWS::S3::Bucket",
+       "Properties" : {
+           "AccessControl" : "PublicRead",
+           "BucketName" : "dl-{{ datalake_name }}-{{ cluster_env }}",
+           "WebsiteConfiguration" : {
+               "IndexDocument" : "index.html",
+               "ErrorDocument" : "error.html"
+           }
+       }
+    },
+    "subnetClusterA": {
+      "Type": "AWS::EC2::Subnet",
+      "Properties": {
+        "CidrBlock": "{{ cidr_subnet_cluster_a }}",
+        "AvailabilityZone": "us-west-2a",
+        "VpcId": {
+          "Ref": "00DatalakeVPC"
+        },
+        "Tags": [{
+          "Key": "Name",
+          "Value": "datalake-{{ cluster_env }}-a"
+        }]
+      }
+    },
+    "subnetClusterB": {
+      "Type": "AWS::EC2::Subnet",
+      "Properties": {
+        "CidrBlock": "{{ cidr_subnet_cluster_b }}",
+        "AvailabilityZone": "us-west-2b",
+        "VpcId": {
+          "Ref": "00DatalakeVPC"
+        },
+        "Tags": [{
+          "Key": "Name",
+          "Value": "datalake-{{ cluster_env }}-b"
+        }]
+      }
+    },
+    "rtbAssocClusterNatA": {
+      "Type" : "AWS::EC2::SubnetRouteTableAssociation",
+      "Properties" : {
+        "RouteTableId" : "{{ route_table_nat_a }}",
+        "SubnetId" : { "Ref" : "subnetClusterA" }
+      }
+    },
+    "rtbAssocClusterNatB": {
+      "Type" : "AWS::EC2::SubnetRouteTableAssociation",
+      "Properties" : {
+        "RouteTableId" : "{{ route_table_nat_b }}",
+        "SubnetId" : { "Ref" : "subnetClusterB" }
+      }
+    },  
+    "pgClusterA" : {
+        "Type" : "AWS::EC2::PlacementGroup",
+        "Properties" : {
+          "Strategy" : "cluster"
+        }
+    },
+    "pgClusterB" : {
+        "Type" : "AWS::EC2::PlacementGroup",
+        "Properties" : {
+          "Strategy" : "cluster"
+        }
+    },
+    "subnetRdsA": {
+      "Type": "AWS::EC2::Subnet",
+      "Properties": {
+        "CidrBlock": "{{ cidr_subnet_rds_a }}",
+        "AvailabilityZone": "us-west-2a",
+        "VpcId": {
+          "Ref": "00DatalakeVPC"
+        },
+        "Tags": [{
+          "Key": "Name",
+          "Value": "datalake-{{ cluster_env }}-rds-a"
+        }]
+      }
+    },
+    "subnetRdsB": {
+      "Type": "AWS::EC2::Subnet",
+      "Properties": {
+        "CidrBlock": "{{ cidr_subnet_rds_b }}",
+        "AvailabilityZone": "us-west-2b",
+        "VpcId": {
+          "Ref": "00DatalakeVPC"
+        },
+        "Tags": [{
+          "Key": "Name",
+          "Value": "datalake-{{ cluster_env }}-rds-b"
+        }]
+      }
+    },
+    "dbsubnetclusterrds": {
+      "Type": "AWS::RDS::DBSubnetGroup",
+      "Properties": {
+        "DBSubnetGroupDescription": "rds subnet group for cluster",
+        "SubnetIds": [
+          { "Ref": "subnetRdsA" },
+          { "Ref": "subnetRdsB" }
+        ]
+      }
+    },
+    "rdsdatalake": {
+      "Type": "AWS::RDS::DBInstance",
+      "Properties": {
+        "DBParameterGroupName" : { "Ref":"pgRdsVpicuDatalake" },
+        "AllocatedStorage": "100",
+        "AllowMajorVersionUpgrade": "false",
+        "AutoMinorVersionUpgrade": "true",
+        "DBInstanceClass": "db.m4.large",
+        "Port": "3306",
+        "StorageType": "gp2",
+        "BackupRetentionPeriod": "7",
+        "DBInstanceIdentifier": { "Ref":"00RdsIdentifier"},
+        "MasterUsername": { "Ref": "01RDSMasterUser" },
+        "MasterUserPassword": { "Ref": "02RDSMasterPassword"},
+        "KmsKeyId": {"Ref":"03RdsKeyId"},
+        "StorageEncrypted": "true",
+        "PreferredBackupWindow": "13:30-14:00",
+        "PreferredMaintenanceWindow": "thu:10:11-thu:10:41",
+        "Engine": "mysql",
+        "EngineVersion": "5.7.11",
+        "LicenseModel": "general-public-license",
+        "MultiAZ": "{{ rds_multi_az }}",
+        "DBSubnetGroupName": {
+          "Ref": "dbsubnetclusterrds"
+        },
+        "VPCSecurityGroups": [
+          { "Ref": "sgRdsCluster"}
+        ],
+        "Tags": [
+          {
+            "Key": "workload-type",
+            "Value": "production"
+          }
+        ]
+      }
+    },
+    "sgRdsCluster": {
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties": {
+        "GroupDescription": "RDS Datalake Cluster",
+        "VpcId" : { "Ref" : "00DatalakeVPC" }        
+      }
+    },
+    "sgRdsClusterIngress3306": {
+      "Type": "AWS::EC2::SecurityGroupIngress",
+      "Properties": {
+        "GroupId": {
+          "Ref": "sgRdsCluster"
+        },
+        "IpProtocol": "tcp",
+        "FromPort": "3306",
+        "ToPort": "3306",
+        "CidrIp": "0.0.0.0/0"
+      }
+    },
+    "sgRdsClusterEgressAllowAll": {
+      "Type": "AWS::EC2::SecurityGroupEgress",
+      "Properties": {
+        "GroupId": {
+          "Ref": "sgRdsCluster"
+        },
+        "IpProtocol": "-1",
+        "CidrIp": "0.0.0.0/0"
+      }
+    },
+    "sgDatalakeClusterDefault" : {
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties": {
+        "GroupDescription" : "Default Security Group for cluster nodes",
+        "VpcId": { 
+          "Ref": "00DatalakeVPC"
+        }
+      }
+    },
+    "sgHdpClusterIngressAll": {
+      "Type": "AWS::EC2::SecurityGroupIngress",
+      "Properties": {
+        "GroupId": {
+          "Ref": "sgDatalakeClusterDefault"
+        },
+        "IpProtocol": "-1",
+        "CidrIp": "0.0.0.0/0"
+      }
+    },
+    "sgHdpClusterEgressAll": {
+      "Type": "AWS::EC2::SecurityGroupEgress",
+      "Properties": {
+        "GroupId": {
+          "Ref": "sgDatalakeClusterDefault"
+        },
+        "IpProtocol": "-1",
+        "CidrIp": "0.0.0.0/0"
+      }
+    },
+    "pgRdsVpicuDatalake":{
+      "Type": "AWS::RDS::DBParameterGroup",
+      "Properties" : {
+        "Description" : "ambari requires log_bin_trust_function_creators = 1",
+        "Family" : "mysql5.7",
+        "Parameters" : {
+          "log_bin_trust_function_creators" : "1"
+        }
+      }
+    }
+  },
+  "Parameters": {
+    "00DatalakeVPC": {
+      "Type": "AWS::EC2::VPC::Id",
+      "Description": "ID of VPC to deploy to"
+    },
+    "00RdsIdentifier": {
+      "Type": "String",
+      "Default": "datalake-{{ cluster_env }}-rds",
+      "Description": "RDS DB Instance Identififer"
+    },
+    "01RDSMasterUser": {
+      "Type": "String",
+      "Default": "master",
+      "Description": "MySQL Master Username"
+    },
+    "02RDSMasterPassword": {
+      "Type": "String",
+      "Default": "asdf1234",
+      "Description": "MySQL Master Password",
+      "NoEcho":"true"
+    },
+    "03RdsKeyId": {
+      "Type": "String",
+      "Default": "2a8016fb-d81a-404a-9a90-29299bdebb19",
+      "Description": "Unique ID of KMS Key to encrypt DB"
+    }
+  },
+  "Outputs": {
+  "BucketName": {
+        "Value": {
+            "Ref": "S3Bucket"
+        },
+        "Description": "Name of the sample Amazon S3 bucket with CORS enabled."
+    },
+    "RDSInstance": {
+      "Value": {
+        "Fn::GetAtt" : [ "rdsdatalake", "Endpoint.Address" ]
+      },
+      "Description": "RDS instance for datalake"
+    },
+    "DatalakeSubnetA": {
+      "Value": { 
+        "Ref": "subnetClusterA"
+      },
+      "Description": "Datalake Subnet in Avail Zone A"
+    },
+    "DatalakeSubnetB": {
+      "Value": { 
+        "Ref": "subnetClusterB"
+      },
+      "Description": "Datalake Subnet in Avail Zone B"
+    },
+    "ClusterPlacementGroupA": {
+      "Value" : {
+        "Ref": "pgClusterA"
+      }
+    },
+    "ClusterPlacementGroupB": {
+      "Value" : {
+        "Ref": "pgClusterB"
+      }
+    },
+    "ClusterSecurityGroup": {
+      "Value" : {
+        "Ref" : "sgDatalakeClusterDefault"
+      }
+    }
+  },
+  "Description": "VPICU Datalake Instance"
+}

@@ -1,0 +1,19 @@
+---
+- hosts: "tag_Name_{{ datalake_name }}_{{ cluster_env }}_*:&tag_Environment_{{ cluster_env }}"
+  vars_prompt:
+    - name: ca_key_passphrase
+      prompt: "Enter password for intermediate CA key"
+      private: true
+
+    - name: keystore_password
+      prompt: "Enter password for server keystore"
+      private: true
+  vars:
+    datalake_name: "{{ lookup('env', 'DATALAKE_NAME') }}"
+    cluster_env: "{{ lookup('env', 'ENVIRONMENT') }}"
+    ca_server: "{{ lookup('env', 'VPC_BASE') }}.20.8"
+  gather_facts: true
+  become: yes
+  remote_user: centos
+  roles:
+    - common

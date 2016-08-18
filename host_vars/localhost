@@ -1,0 +1,2 @@
+# if you're using Mac OS X with brew installation
+#ansible_python_interpreter: /usr/local/bin/python

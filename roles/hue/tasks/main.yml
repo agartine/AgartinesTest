@@ -1,0 +1,199 @@
+# Assume this has been added to the cluster as an edge node
+# may split this out into 'edge node' requirements vs hue requirements
+# want to deprecate the HUE node, since it cant be managed by ambari easily
+
+- name: download .repo for HDP 2.4.2
+  get_url: url="http://public-repo-1.hortonworks.com/HDP/centos6/2.x/updates/2.4.2.0/hdp.repo" dest=/etc/yum.repos.d/hdp.repo force=yes
+
+- name: install hadoop client (2.4.2)
+  yum: name=hadoop-client state=latest
+
+- name: install Hue
+  yum: name=hue state=latest
+
+- set_fact:
+    hue_host: "{{ hostvars[ansible_eth0.ipv4.address].ec2_tag_NodeType|lower }}-{{ ansible_eth0.ipv4.address.split('.')[3] }}.{{ hostvars[ansible_eth0.ipv4.address].ec2_tag_Environment|lower }}.{{ datalake_name }}.datalake"
+
+# get hostnames for services to be inserted into Hue.ini
+
+- uri:
+    url: https://{{ ambari_hostname }}:8443/api/v1/clusters/{{ cluster_name }}/services/HDFS/components/NAMENODE?fields=host_components/HostRoles/host_name
+    method: GET
+    validate_certs: False
+    return_content: yes
+    user: admin
+    password: admin
+    force_basic_auth: true
+    headers:
+      X-Requested-By: ambari
+  run_once: true
+  register: namenode_result
+
+- uri:
+    url: https://{{ ambari_hostname }}:8443/api/v1/clusters/{{ cluster_name }}/services/YARN/components/RESOURCEMANAGER?fields=host_components/HostRoles/host_name
+    method: GET
+    validate_certs: False
+    return_content: yes
+    user: admin
+    password: admin
+    force_basic_auth: true
+    headers:
+      X-Requested-By: ambari
+  run_once: true
+  register: resourcemanager_result
+
+- uri:
+    url: https://{{ ambari_hostname }}:8443/api/v1/clusters/{{ cluster_name }}/services/MAPREDUCE2/components/HISTORYSERVER?fields=host_components/HostRoles/host_name
+    method: GET
+    validate_certs: False
+    return_content: yes
+    user: admin
+    password: admin
+    force_basic_auth: true
+    headers:
+      X-Requested-By: ambari
+  run_once: true
+  register: historyserver_result
+
+- uri:
+    url: https://{{ ambari_hostname }}:8443/api/v1/clusters/{{ cluster_name }}/services/YARN/components/APP_TIMELINE_SERVER?fields=host_components/HostRoles/host_name
+    method: GET
+    validate_certs: False
+    return_content: yes
+    user: admin
+    password: admin
+    force_basic_auth: true
+    headers:
+      X-Requested-By: ambari
+  run_once: true
+  register: timelineserver_result
+
+- uri:
+    # potentially multiple results
+    url: https://{{ ambari_hostname }}:8443/api/v1/clusters/{{ cluster_name }}/services/YARN/components/NODEMANAGER?fields=host_components/HostRoles/host_name
+    method: GET
+    validate_certs: False
+    return_content: yes
+    user: admin
+    password: admin
+    force_basic_auth: true
+    headers:
+      X-Requested-By: ambari
+  run_once: true
+  register: nodemanager_result
+
+- uri:
+    url: https://{{ ambari_hostname }}:8443/api/v1/clusters/{{ cluster_name }}/services/OOZIE/components/OOZIE_SERVER?fields=host_components/HostRoles/host_name
+    method: GET
+    validate_certs: False
+    return_content: yes
+    user: admin
+    password: admin
+    force_basic_auth: true
+    headers:
+      X-Requested-By: ambari
+  run_once: true
+  register: oozie_result
+
+- uri:
+    url: https://{{ ambari_hostname }}:8443/api/v1/clusters/{{ cluster_name }}/services/HIVE/components/HIVE_SERVER?fields=host_components/HostRoles/host_name
+    method: GET
+    validate_certs: False
+    return_content: yes
+    user: admin
+    password: admin
+    force_basic_auth: true
+    headers:
+      X-Requested-By: ambari
+  run_once: true
+  register: hiveserver_result
+
+- uri:
+    url: https://{{ ambari_hostname }}:8443/api/v1/clusters/{{ cluster_name }}/services/HIVE/components/WEBHCAT_SERVER?fields=host_components/HostRoles/host_name
+    method: GET
+    validate_certs: False
+    return_content: yes
+    user: admin
+    password: admin
+    force_basic_auth: true
+    headers:
+      X-Requested-By: ambari
+  run_once: true
+  register: hcatalog_result
+
+- set_fact: 
+    namenode_content: "{{ namenode_result['content']|from_json }}"
+    resourcemanager_content: "{{ resourcemanager_result['content']|from_json }}"
+    historyserver_content: "{{ historyserver_result['content']|from_json }}"
+    timelineserver_content: "{{ timelineserver_result['content']|from_json }}"
+    nodemanager_content: "{{ nodemanager_result['content']|from_json }}"
+    oozie_content: "{{ oozie_result['content']|from_json }}"
+    hiveserver_content: "{{ hiveserver_result['content']|from_json }}"
+    hcatalog_content: "{{ hcatalog_result['content']|from_json }}"
+
+- set_fact:
+    namenode_host: "{{ namenode_content['host_components'] | map(attribute='HostRoles.host_name') | first }}"
+    resourcemanager_host: "{{ resourcemanager_content['host_components'] | map(attribute='HostRoles.host_name') | first }}"
+    historyserver_host: "{{ historyserver_content['host_components'] | map(attribute='HostRoles.host_name') | first }}"
+    timelineserver_host: "{{ timelineserver_content['host_components'] | map(attribute='HostRoles.host_name') | first }}"
+    nodemanager_host: "{{ nodemanager_content['host_components'] | map(attribute='HostRoles.host_name') | first }}"
+    oozie_host: "{{ oozie_content['host_components'] | map(attribute='HostRoles.host_name') | first }}"
+    hiveserver_host: "{{ hiveserver_content['host_components'] | map(attribute='HostRoles.host_name') | first }}"
+    hcatalog_host: "{{ hcatalog_content['host_components'] | map(attribute='HostRoles.host_name') | first }}"
+
+# - debug: msg="{{ hdfs_host }}\n{{ resourcemanager_host }}\n{{ historyserver_host }}\n{{ timelineserver_host }}\n{{ nodemanager_host }}\n{{ oozie_host }}\n{{ hiveserver_host }}\n{{ hcatalog_host }}\n"
+
+- name: update hue.ini
+  template: src=hue.ini dest=/etc/hue/conf.empty/hue.ini
+
+- name: copy private key, cert, ca bundle, rds ca bundle
+  copy: remote_src=true src="/home/centos/{{ hue_host }}.key.pem" dest="/usr/lib/hue/{{ hue_host }}.key.pem"
+- copy: remote_src=true src="/home/centos/{{ hue_host }}.cert.pem" dest="/usr/lib/hue/{{ hue_host }}.cert.pem"
+- copy: src="trusted-ca/vpicu-ca-bundle.pem" dest="/usr/lib/hue/vpicu-ca-bundle.pem"
+- copy: src="trusted-ca/rds-combined-ca-bundle.pem" dest="/usr/lib/hue/rds-combined-ca-bundle.pem"
+
+- name: set file permissions on cert / key
+  file: path="/usr/lib/hue/{{ hue_host }}.key.pem" mode=440 owner=hue group=hadoop
+- file: path="/usr/lib/hue/{{ hue_host }}.cert.pem" mode=440 owner=hue group=hadoop
+- file: path="/usr/lib/hue/vpicu-ca-bundle.pem" mode=440 owner=hue group=hadoop
+- file: path="/usr/lib/hue/rds-combined-ca-bundle.pem" mode=440 owner=hue group=hadoop
+
+- name: create hue metadata database
+  become: no
+  local_action: mysql_db name={{ cluster_env }}_hue login_user={{ rds_master_username }} login_password={{ rds_master_password }} login_host={{ rds_hostname }}
+
+- name: add hue mysql_user
+  local_action: mysql_user name={{ cluster_env }}_hue password={{ rds_hue_password }} priv="{{ cluster_env }}_hue.*:ALL,GRANT" host=% login_user={{ rds_master_username }} login_password={{ rds_master_password }} login_host={{ rds_hostname }}
+  become: no
+- local_action: mysql_user name={{ cluster_env }}_hue append_privs=true priv="*.*:REQUIRESSL" state=present host=% login_user={{ rds_master_username }} login_password={{ rds_master_password }} login_host={{ rds_hostname }}  
+  become: no
+
+- name: install mysql library
+  yum: name=mysql state=latest
+
+
+# Avert your eyes, dirty hack to allow Hue to talk to webhdfs over ssl
+- replace:
+    dest: /usr/lib/hue/desktop/core/src/desktop/lib/rest/http_client.py
+    regexp: 'request_kwargs\["verify"\] = self\._cert_validate'
+    replace: 'request_kwargs["verify"] = "/usr/lib/hue/vpicu-ca-bundle.pem"'
+# Avert your eyes again, dirty hack to connect hue to mysql via ssl
+- lineinfile:
+    dest: /usr/lib/hue/build/env/lib/python2.6/site-packages/Django-1.2.3-py2.6.egg/django/db/backends/mysql/base.py
+    line: "            kwargs['ssl'] = {'ca':'/usr/lib/hue/rds-combined-ca-bundle.pem'}"
+    regexp: kwargs\[\'ssl\'\] = 
+    insertbefore: 'self\.connection = Database\.connect\(\*\*kwargs\)$'
+    state: present
+    backup: yes
+
+- name: sync hue database
+  command: /usr/lib/hue/build/env/bin/hue syncdb --noinput
+
+- name: migrate hue db (if needed, some reason this is a problem)
+  command: /usr/lib/hue/build/env/bin/hue migrate
+
+- name: turn off iptables
+  service: name=iptables enabled=no state=stopped
+
+- name: start hue
+  command: /etc/init.d/hue restart

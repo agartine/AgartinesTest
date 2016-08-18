@@ -1,0 +1,11 @@
+---
+- hosts: localhost
+  vars:
+    cluster_env: "{{ lookup('env', 'ENVIRONMENT') }}"
+    rds_hostname: "{{ lookup('env', 'RDS_HOST' ) }}"
+    rds_master_username: master
+    rds_master_password: asdf1234
+  tasks:
+  # add back the REQUIRE SSL privilege after installation is complete - workaround for the ranger setup script
+  - local_action: mysql_user name={{ cluster_env }}_rangeradmin append_privs=true priv="*.*:REQUIRESSL" state=present host=% login_user={{ rds_master_username }} login_password={{ rds_master_password }} login_host={{ rds_hostname }}
+    become: no

@@ -1,0 +1,142 @@
+- name: download .repo for ambari
+  get_url: url="http://public-repo-1.hortonworks.com/ambari/centos7/2.x/updates/2.2.2.0/ambari.repo" dest=/etc/yum.repos.d/ambari.repo force=yes
+
+- name: install ambari server package
+  yum: name=ambari-server state=latest enablerepo=Updates-ambari-2.2.2.0 
+
+- name: install expect package
+  yum: name=expect state=latest
+
+- name: ensure ambari service is stopped
+  service: name=ambari-server enabled=yes state=stopped
+
+# # drop databases first
+- name: drop ambari database
+  become: no
+  when: "{{ drop_databases }} == True"
+  local_action: mysql_db name={{ ec2_tag_Environment }}_ambari state=absent login_user={{ rds_master_username }} login_password={{ rds_master_password }} login_host={{ rds_hostname }}
+
+- name: drop hive database
+  become: no
+  when: "{{ drop_databases }} == True"
+  local_action: mysql_db name={{ ec2_tag_Environment }}_hive state=absent login_user={{ rds_master_username }} login_password={{ rds_master_password }} login_host={{ rds_hostname }}
+
+- name: drop oozie database
+  become: no
+  when: "{{ drop_databases }} == True"
+  local_action: mysql_db name={{ ec2_tag_Environment }}_oozie state=absent login_user={{ rds_master_username }} login_password={{ rds_master_password }} login_host={{ rds_hostname }}
+
+- name: drop ranger metadata database
+  become: no
+  when: "{{ drop_databases }} == True"
+  local_action: mysql_db name={{ ec2_tag_Environment }}_ranger state=absent login_user={{ rds_master_username }} login_password={{ rds_master_password }} login_host={{ rds_hostname }}
+
+- name: drop ranger audit database
+  become: no
+  when: "{{ drop_databases }} == True"
+  local_action: mysql_db name={{ ec2_tag_Environment }}_rangerlogger state=absent login_user={{ rds_master_username }} login_password={{ rds_master_password }} login_host={{ rds_hostname }}
+
+# create databases
+- name: create ambari metadata database
+  become: no
+  local_action: mysql_db name={{ ec2_tag_Environment }}_ambari login_user={{ rds_master_username }} login_password={{ rds_master_password }} login_host={{ rds_hostname }}
+
+- name: add ambari mysql_user (from ansible client)
+  become: no
+  local_action: mysql_user name="{{ ec2_tag_Environment }}_ambari" password="{{ rds_ambari_password }}" priv="{{ ec2_tag_Environment }}_ambari.*:ALL,GRANT" host=% login_user={{ rds_master_username }} login_password={{ rds_master_password }} login_host={{ rds_hostname }}
+- local_action: mysql_user name={{ ec2_tag_Environment }}_ambari append_privs=true priv="*.*:REQUIRESSL" state=present host=% login_user={{ rds_master_username }} login_password={{ rds_master_password }} login_host={{ rds_hostname }}
+  become: no
+
+# hive database
+- name: create hive metadata database
+  become: no
+  local_action: mysql_db name={{ ec2_tag_Environment }}_hive login_user={{ rds_master_username }} login_password={{ rds_master_password }} login_host={{ rds_hostname }} 
+- name: add hive mysql_user
+  become: no
+  local_action: mysql_user name={{ ec2_tag_Environment }}_hive password={{ rds_hive_password }} priv="{{ ec2_tag_Environment }}_hive.*:ALL,GRANT" host=% login_user={{ rds_master_username }} login_password={{ rds_master_password }} login_host={{ rds_hostname }}
+- local_action: mysql_user name={{ ec2_tag_Environment }}_hive append_privs=true priv="*.*:REQUIRESSL" state=present host=% login_user={{ rds_master_username }} login_password={{ rds_master_password }} login_host={{ rds_hostname }}
+  become: no
+
+# oozie database
+- name: create oozie metadata database
+  become: no
+  local_action: mysql_db name={{ ec2_tag_Environment }}_oozie login_user={{ rds_master_username }} login_password={{ rds_master_password }} login_host={{ rds_hostname }} 
+- name: add oozie mysql_user
+  become: no
+  local_action: mysql_user name={{ ec2_tag_Environment }}_oozie password={{ rds_oozie_password }} priv="{{ ec2_tag_Environment }}_oozie.*:ALL,GRANT" host=% login_user={{ rds_master_username }} login_password={{ rds_master_password }} login_host={{ rds_hostname }}
+- local_action: mysql_user name={{ ec2_tag_Environment }}_oozie append_privs=true priv="*.*:REQUIRESSL" state=present host=% login_user={{ rds_master_username }} login_password={{ rds_master_password }} login_host={{ rds_hostname }}
+  become: no
+
+# Ranger databases
+- name: create ranger metadata database
+  become: no
+  local_action: mysql_db name={{ ec2_tag_Environment }}_ranger login_user={{ rds_master_username }} login_password={{ rds_master_password }} login_host={{ rds_hostname }} 
+# because of issue in ranger admin setup, must remove the rangeradmin user and recreate without SSL login requirement
+- local_action: mysql_user name={{ ec2_tag_Environment }}_rangeradmin state=absent host=% login_user={{ rds_master_username }} login_password={{ rds_master_password }} login_host={{ rds_hostname }}
+  become: no
+- local_action: mysql_user name={{ ec2_tag_Environment }}_rangeradmin password={{ rds_rangeradmin_password }} priv="{{ ec2_tag_Environment }}_ranger.*:ALL,GRANT" host=% login_user={{ rds_master_username }} login_password={{ rds_master_password }} login_host={{ rds_hostname }}
+  become: no
+# Add requiressl in the cleanup.yml playbook
+
+- name: create ranger audit database
+  become: no
+  local_action: mysql_db name={{ ec2_tag_Environment }}_rangerlogger login_user={{ rds_master_username }} login_password={{ rds_master_password }} login_host={{ rds_hostname }} 
+- name: ranger audit user
+  become: no
+  local_action: mysql_user name={{ ec2_tag_Environment }}_rangerlogger password={{ rds_rangeraudit_password }} priv="{{ ec2_tag_Environment }}_rangerlogger.*:ALL,GRANT" host=% login_user={{ rds_master_username }} login_password={{ rds_master_password }} login_host={{ rds_hostname }}
+- local_action: mysql_user name={{ ec2_tag_Environment }}_rangerlogger append_privs=true priv="*.*:REQUIRESSL" state=present host=% login_user={{ rds_master_username }} login_password={{ rds_master_password }} login_host={{ rds_hostname }}
+  become: no
+
+##############################
+# Ambari-Server setup
+##############################
+
+# get java library path
+- shell: readlink -f /usr/bin/java | sed "s:jre/bin/java::"
+  register: java_home
+
+- name: run ambari-server setup
+  shell: ambari-server setup -s -j {{ java_home.stdout_lines[0] }} --database=mysql --databasehost={{ rds_hostname }} --databaseport=3306 --databasename={{ ec2_tag_Environment }}_ambari --databaseusername={{ ec2_tag_Environment }}_ambari --databasepassword={{ rds_ambari_password }}
+
+# read ambari properties file to see if api.ssl=true (ssl already setup)
+- fetch: src=/etc/ambari-server/conf/ambari.properties dest=ambari.properties flat=yes
+
+- set_fact: 
+    api_ssl_enabled: "{{ lookup('ini', 'api.ssl type=properties file=ambari.properties') }}"
+    truststore_path: "{{ lookup('ini', 'ssl.trustStore.path type=properties file=ambari.properties') }}"
+    datalake_hostname: "{{ hostvars[ansible_eth0.ipv4.address].ec2_tag_NodeType|lower }}-{{ ansible_eth0.ipv4.address.split('.')[3] }}.{{ hostvars[ansible_eth0.ipv4.address].ec2_tag_Environment|lower }}.{{ datalake_name }}.datalake"
+
+- name: run ambari-server https setup 
+  script: roles/ambari/scripts/ambari_server_https_exp.sh {{ datalake_hostname }}
+  when: ( api_ssl_enabled == false ) or ( api_ssl_enabled == [] )
+
+- name: (TODO change password for truststore) run ambari-server truststore setup
+  script: roles/ambari/scripts/ambari_server_truststore_exp.sh changeit
+  when: truststore_path == []
+
+- name: get generated DDL
+  # if there is more than one host, the file will get overwritten (flat=yes)
+  when: "{{ drop_databases }} == True"
+  fetch: src=/var/lib/ambari-server/resources/Ambari-DDL-MySQL-CREATE.sql dest=Ambari-DDL-MySQL-CREATE.sql fail_on_missing=yes flat=yes
+
+- name: run the generated DDL
+  when: "{{ drop_databases }} == True"
+  become: no
+  # local_action: mysql_db state=import target=Ambari-DDL-MySQL-CREATE.sql name={{ ec2_tag_Environment }}_ambari login_user={{ ec2_tag_Environment }}_ambari login_password={{ rds_ambari_password }} login_host={{ rds_hostname }} ssl_ca="trusted-ca/rds-combined-ca-bundle.pem"
+  # bug in mysql_db tasks; does not use ssl_ca param appropriately
+  shell: mysql -h {{ rds_hostname }} -u {{ cluster_env}}_ambari --database={{ cluster_env }}_ambari --password={{ rds_ambari_password }} --ssl_ca=trusted-ca/rds-combined-ca-bundle.pem < Ambari-DDL-MySQL-CREATE.sql
+  args:
+    chdir: "{{ playbook_dir }}"
+  delegate_to: localhost
+
+- name: reset permissions on cert trustStore
+  file: path=/etc/pki/ca-trust/extracted/java/cacerts mode="u=r,g=r,o=r"
+
+- name: modify ambari.properties to require SSL for mysql
+  replace: 
+    dest: /etc/ambari-server/conf/ambari.properties
+    regexp: 'jdbc:mysql:\/\/{{ rds_hostname }}:3306\/{{ cluster_env }}_ambari$'
+    replace: 'jdbc:mysql://{{ rds_hostname }}:3306/{{ cluster_env }}_ambari?useSSL=true&requireSSL=true'
+
+- name: start the ambari service
+  service: name=ambari-server enabled=yes state=started

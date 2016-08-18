@@ -1,0 +1,325 @@
+{
+  "blueprint" : "{{ blueprint_name }}",
+  "default_password" : "{{ default_password }}",
+  "configurations" : [
+    {
+      "admin-properties":{
+        "properties":{
+          "audit_db_name" : "{{ cluster_env }}_rangerlogger",
+          "audit_db_user" : "{{ cluster_env }}_rangerlogger",
+          "db_root_user" : "{{ rds_master_username }}",
+          "db_root_password" : "{{ rds_master_password }}",
+          "DB_FLAVOR" : "MYSQL",
+          "db_name" : "{{ cluster_env }}_ranger",
+          "db_user" : "{{ cluster_env }}_rangeradmin",
+          "policymgr_external_url" : "http://%HOSTGROUP::host_group_1%:6080",
+          "SQL_CONNECTOR_JAR" : "/usr/share/java/mysql-connector-java.jar",
+          "db_host" : "{{ rds_hostname }}"          
+        }
+      },
+      "ranger-knox-plugin-properties" : {
+        "properties" : {
+          "KNOX_HOME" : "/usr/hdp/current/knox-server",
+          "REPOSITORY_CONFIG_USERNAME" : "admin",
+          "common.name.for.certificate" : "",
+          "ranger-knox-plugin-enabled" : "Yes",
+          "policy_user" : "ambari-qa"
+        }
+      },
+      "ranger-admin-site" : {
+        "properties" : {
+          "ranger.sso.browser.useragent" : "Mozilla,chrome",
+          "ranger.jpa.audit.jdbc.credential.alias" : "rangeraudit",
+          "ranger.jpa.jdbc.dialect" : "{{jdbc_dialect|default('{{jdbc_dialect}}')}}",
+          "ranger.jpa.jdbc.user" : "{{ranger_db_user|default('{{ranger_db_user}}')}}",
+          "ranger.https.attrib.keystore.file" : "/etc/ranger/admin/conf/ranger-admin-keystore.jks",
+          "ranger.service.http.enabled" : "true",
+          "ranger.jpa.audit.jdbc.url" : "{{audit_jdbc_url|default('{{audit_jdbc_url}}')}}",
+          "ranger.ldap.ad.url" : "{{ranger_ug_ldap_url|default('{{ranger_ug_ldap_url}}')}}",
+          "ranger.audit.solr.username" : "{{ cluster_env }}_ranger_solr",
+          "ranger.ldap.base.dn" : "dc=example,dc=com",
+          "ranger.ldap.group.roleattribute" : "cn",
+          "ranger.unixauth.remote.login.enabled" : "true",
+          "ranger.authentication.method" : "UNIX",
+          "ranger.ldap.user.dnpattern" : "uid={0},ou=users,dc=xasecure,dc=net",
+          "ranger.ldap.ad.bind.dn" : "{{ranger_ug_ldap_bind_dn|default('{{ranger_ug_ldap_bind_dn}}')}}",
+          "ranger.ldap.group.searchfilter" : "{{ranger_ug_ldap_group_searchfilter|default('{{ranger_ug_ldap_group_searchfilter}}')}}",
+          "ranger.service.https.attrib.ssl.enabled" : "false",
+          "ranger.audit.solr.urls" : "http://localhost:6083/solr/ranger_audits",
+          "ranger.service.https.attrib.clientAuth" : "want",
+          "ranger.sso.enabled" : "false",
+          "ranger.ldap.group.searchbase" : "{{ranger_ug_ldap_group_searchbase|default('{{ranger_ug_ldap_group_searchbase}}')}}",
+          "ranger.sso.publicKey" : "",
+          "ranger.jpa.jdbc.credential.alias" : "rangeradmin",
+          "ranger.unixauth.service.hostname" : "{{ugsync_host|default('{{ugsync_host}}')}}",
+          "ranger.sso.query.param.originalurl" : "originalUrl",
+          "ranger.jpa.audit.jdbc.user" : "{{ranger_audit_db_user|default('{{ranger_audit_db_user}}')}}",
+          "ranger.jpa.jdbc.url" : "jdbc:mysql://{{ rds_hostname }}/{{ cluster_env }}_ranger?useSSL=true&requireSSL=true",
+          "ranger.service.host" : "{{ranger_host|default('{{ranger_host}}')}}",
+          "ranger.ldap.bind.dn" : "{{ranger_ug_ldap_bind_dn|default('{{ranger_ug_ldap_bind_dn}}')}}",
+          "ranger.service.http.port" : "6080",
+          "ranger.ldap.url" : "{{ranger_ug_ldap_url|default('{{ranger_ug_ldap_url}}')}}",
+          "ranger.jpa.jdbc.driver" : "com.mysql.jdbc.Driver",
+          "ranger.unixauth.service.port" : "5151",
+          "ranger.ldap.ad.base.dn" : "dc=example,dc=com",
+          "ranger.ldap.referral" : "ignore",
+          "ranger.jpa.audit.jdbc.driver" : "{{ranger_jdbc_driver|default('{{ranger_jdbc_driver}}')}}",
+          "ranger.service.https.attrib.keystore.keyalias" : "rangeradmin",
+          "ranger.ldap.ad.referral" : "ignore",
+          "ranger.sso.cookiename" : "hadoop-jwt",
+          "ranger.jpa.audit.jdbc.dialect" : "{{jdbc_dialect|default('{{jdbc_dialect}}')}}",
+          "ranger.ldap.ad.domain" : "",
+          "ranger.ldap.ad.user.searchfilter" : "{{ranger_ug_ldap_user_searchfilter|default('{{ranger_ug_ldap_user_searchfilter}}')}}",
+          "ranger.credential.provider.path" : "/etc/ranger/admin/rangeradmin.jceks",
+          "ranger.sso.providerurl" : "",
+          "ranger.ldap.user.searchfilter" : "{{ranger_ug_ldap_user_searchfilter|default('{{ranger_ug_ldap_user_searchfilter}}')}}",
+          "ranger.audit.source.type" : "solr",
+          "ranger.audit.solr.zookeepers" : "NONE",
+          "ranger.externalurl" : "{{ranger_external_url|default('{{ranger_external_url}}')}}",
+          "ranger.service.https.attrib.keystore.pass" : "SECRET",
+          "ranger.service.https.port" : "6182"
+        }
+      },
+      "ranger-kafka-policymgr-ssl" : {
+        "properties" : {
+          "xasecure.policymgr.clientssl.truststore" : "/usr/hdp/current/kafka-broker/config/ranger-plugin-truststore.jks",
+          "xasecure.policymgr.clientssl.keystore" : "/usr/hdp/current/kafka-broker/config/ranger-plugin-keystore.jks",
+          "xasecure.policymgr.clientssl.keystore.credential.file" : "jceks://file/{{credential_file|default('{{credential_file}}')}}",
+          "xasecure.policymgr.clientssl.truststore.credential.file" : "jceks://file/{{credential_file|default('{{credential_file}}')}}"
+        }
+      },
+      "ranger-env" : {
+        "properties" : {
+          "ranger_group" : "ranger",
+          "ranger_usersync_log_dir" : "/var/log/ranger/usersync",
+          "is_solrCloud_enabled" : "false",
+          "ranger-hive-plugin-enabled" : "Yes",
+          "xasecure.audit.destination.hdfs" : "false",
+          "admin_username" : "admin",
+          "ranger-hbase-plugin-enabled" : "Yes",
+          "ranger-hdfs-plugin-enabled" : "Yes",
+          "ranger_admin_log_dir" : "/var/log/ranger/admin",
+          "ranger-knox-plugin-enabled" : "No",
+          "xasecure.audit.destination.hdfs.dir" : "hdfs://{{ namenode_hostname }}/ranger/audit",
+          "ranger_privelege_user_jdbc_url" : "jdbc:mysql://{{ rds_hostname }}?useSSL=true&requireSSL=true",
+          "ranger-kafka-plugin-enabled" : "Yes",
+          "bind_anonymous" : "false",
+          "ranger_user" : "{{ cluster_env }}_ranger",
+          "xasecure.audit.destination.db" : "true",
+          "xml_configurations_supported" : "true",
+          "ranger-yarn-plugin-enabled" : "Yes",
+          "ranger_admin_username" : "amb_ranger_admin",
+          "ranger_admin_password" : "{{ amb_ranger_password }}",
+          "xasecure.audit.destination.solr" : "false",
+          "ranger_pid_dir" : "/var/run/ranger",
+          "create_db_dbuser" : "true",
+          "ranger-storm-plugin-enabled" : "No"
+        }
+      },
+      "kms-site" : {
+        "properties" : {
+          "hadoop.kms.authentication.signer.secret.provider.zookeeper.kerberos.keytab" : "/etc/hadoop/conf/kms.keytab",
+          "hadoop.kms.authentication.type" : "simple",
+          "hadoop.kms.key.provider.uri" : "dbks://http@localhost:9292/kms",
+          "hadoop.kms.authentication.kerberos.principal" : "HTTP/localhost",
+          "hadoop.kms.cache.timeout.ms" : "600000",
+          "hadoop.kms.security.authorization.manager" : "org.apache.ranger.authorization.kms.authorizer.RangerKmsAuthorizer",
+          "hadoop.kms.audit.aggregation.window.ms" : "10000",
+          "hadoop.kms.authentication.kerberos.keytab" : "${user.home}/kms.keytab",
+          "hadoop.kms.authentication.kerberos.name.rules" : "DEFAULT",
+          "hadoop.kms.cache.enable" : "true",
+          "hadoop.kms.authentication.signer.secret.provider.zookeeper.kerberos.principal" : "kms/#HOSTNAME#",
+          "hadoop.kms.current.key.cache.timeout.ms" : "30000",
+          "hadoop.kms.authentication.signer.secret.provider.zookeeper.path" : "/hadoop-kms/hadoop-auth-signature-secret",
+          "hadoop.kms.authentication.signer.secret.provider.zookeeper.connection.string" : "#HOSTNAME#:#PORT#,...",
+          "hadoop.kms.authentication.signer.secret.provider" : "random",
+          "hadoop.kms.authentication.signer.secret.provider.zookeeper.auth.type" : "kerberos"
+        }
+      },
+      "ranger-hbase-policymgr-ssl" : {
+        "properties" : {
+          "xasecure.policymgr.clientssl.truststore" : "/usr/hdp/current/hbase-client/conf/ranger-plugin-truststore.jks",
+          "xasecure.policymgr.clientssl.keystore" : "/usr/hdp/current/hbase-client/conf/ranger-plugin-keystore.jks",
+          "xasecure.policymgr.clientssl.keystore.credential.file" : "jceks://file{{credential_file|default('{{credential_file}}')}}",
+          "xasecure.policymgr.clientssl.truststore.credential.file" : "jceks://file{{credential_file|default('{{credential_file}}')}}"
+        }
+      },
+      "ranger-kms-audit" : {
+        "properties" : {
+          "xasecure.audit.credential.provider.file" : "jceks://file{{credential_file|default('{{credential_file}}')}}",
+          "xasecure.audit.destination.hdfs.batch.filespool.dir" : "/var/log/ranger/kms/audit/hdfs/spool",
+          "xasecure.audit.is.enabled" : "true",
+          "xasecure.audit.destination.hdfs" : "true",
+          "xasecure.audit.destination.solr.batch.filespool.dir" : "/var/log/ranger/kms/audit/solr/spool",
+          "xasecure.audit.destination.hdfs.dir" : "hdfs://{{ namenode_hostname }}:8020/ranger/audit",
+          "xasecure.audit.destination.db.jdbc.url" : "{{audit_jdbc_url|default('{{audit_jdbc_url}}')}}",
+          "xasecure.audit.destination.db.jdbc.driver" : "{{jdbc_driver|default('{{jdbc_driver}}')}}",
+          "xasecure.audit.destination.db" : "false",
+          "xasecure.audit.destination.solr" : "true",
+          "xasecure.audit.destination.db.user" : "{{xa_audit_db_user|default('{{xa_audit_db_user}}')}}",
+          "xasecure.audit.destination.solr.zookeepers" : "none",
+          "xasecure.audit.provider.summary.enabled" : "false",
+          "xasecure.audit.destination.db.batch.filespool.dir" : "/var/log/ranger/kms/audit/db/spool",
+          "xasecure.audit.destination.solr.urls" : "{{ranger_audit_solr_urls|default('{{ranger_audit_solr_urls}}')}}"
+        }
+    },
+      "dbks-site" : {
+        "properties" : {
+          "ranger.ks.masterkey.credential.alias" : "ranger.ks.masterkey.password",
+          "hadoop.kms.blacklist.DECRYPT_EEK" : "hdfs",
+          "ranger.ks.jpa.jdbc.credential.alias" : "ranger.ks.jdbc.password",
+          "ranger.ks.jdbc.sqlconnectorjar" : "{{ews_lib_jar_path|default('{{ews_lib_jar_path}}')}}",
+          "ranger.ks.jpa.jdbc.dialect" : "{{jdbc_dialect|default('{{jdbc_dialect}}')}}",
+          "ranger.ks.jpa.jdbc.credential.provider.path" : "/etc/ranger/kms/rangerkms.jceks",
+          "ranger.ks.jpa.jdbc.url" : "jdbc:mysql://{{ rds_hostname }}/{{ cluster_env }}_rangerkms?useSSL=true&requireSSL=true",
+          "ranger.ks.jpa.jdbc.driver" : "com.mysql.jdbc.Driver",
+          "ranger.ks.jpa.jdbc.user" : "{{db_user|default('{{db_user}}')}}",
+          "ranger.ks.jpa.jdbc.password" : "{{ rds_rangerkms_password }}"
+        }
+    },
+      "ranger-kms-security" : {
+        "properties" : {
+          "ranger.plugin.kms.policy.rest.url" : "{{policymgr_mgr_url|default('{{policymgr_mgr_url}}')}}",
+          "ranger.plugin.kms.policy.cache.dir" : "/etc/ranger/{{repo_name|default('{{repo_name}}')}}/policycache",
+          "ranger.plugin.kms.policy.source.impl" : "org.apache.ranger.admin.client.RangerAdminRESTClient",
+          "ranger.plugin.kms.policy.pollIntervalMs" : "30000",
+          "ranger.plugin.kms.policy.rest.ssl.config.file" : "/etc/ranger/kms/conf/ranger-policymgr-ssl.xml",
+          "ranger.plugin.kms.service.name" : "{{repo_name|default('{{repo_name}}')}}"
+        }
+    },
+      "knox-env" : {
+       "properties":{
+         "knox_master_secret" : "{{ knox_secret }}"
+        }
+      },
+       "hive-env" : {
+        "properties":{
+          "hive_database" : "Existing MySQL Database",
+          "hive_database_name" : "{{ cluster_env }}_hive",
+          "hive_database_type" : "mysql",
+          "hive_existing_mysql_database" : "MySQL",
+          "hive_existing_mysql_host" : "{{ rds_hostname }}",
+          "hive_user" : "{{ cluster_env }}_hive",
+          "hive_metastore_user_passwd": "{{ rds_hive_password }}"
+        }
+      },
+      "hive-site" : {
+        "properties":{
+          "ambari.hive.db.schema.name" : "{{ cluster_env }}_hive",
+          "javax.jdo.option.ConnectionPassword": "{{ rds_hive_password }}",
+          "javax.jdo.option.ConnectionDriverName" : "com.mysql.jdbc.Driver",
+          "javax.jdo.option.ConnectionURL" : "jdbc:mysql://{{ rds_hostname }}/{{ cluster_env }}_hive?createDatabaseIfNotExist=true&useSSL=true&requireSSL=true",
+          "javax.jdo.option.ConnectionUserName" : "{{ cluster_env }}_hive",
+          "hive.server2.use.SSL" : "true",
+          "hive.server2.keystore.path" : "/etc/security/serverKeys/keystore.jks",
+          "hive.server2.keystore.password" : "{{ keystore_password }}"
+        }
+      },
+      "hbase-site" : {
+        "properties":{
+          "hbase.ssl.enabled" : "true",
+          "hbase.rest.ssl.enabled" : "true",
+          "hbase.rest.ssl.keystore.store" : "/etc/security/serverKeys/keystore.jks",
+          "hbase.rest.ssl.keystore.password" : "{{ keystore_password }}",
+          "hbase.rest.ssl.keystore.keypassword" : "{{ keystore_key_password }}"
+        }
+      },
+      "kms-properties" : {
+        "properties" : {
+          "KMS_MASTER_KEY_PASSWD" : "{{ kms_masterkey_password }}",
+          "db_root_user" : "master",
+          "db_root_password" : "{{ rds_master_password }}",
+          "DB_FLAVOR" : "MYSQL",
+          "db_name" : "{{ cluster_env }}_rangerkms",
+          "db_user" : "{{ cluster_env }}_rangerkms",
+          "db_password" : "{{ rds_rangerkms_password }}",
+          "SQL_CONNECTOR_JAR" : "/usr/share/java/mysql-connector-java.jar",
+          "REPOSITORY_CONFIG_USERNAME" : "keyadmin",
+          "db_host" : "{{ rds_hostname }}"
+        }
+      },
+      "oozie-env" : {
+        "properties": {
+          "oozie_ambari_database" : "MySQL",
+          "oozie_database" : "Existing MySQL Database",
+          "oozie_existing_mysql_host" : "{{ rds_hostname }}",
+          "oozie_existing_mysql_database" : "MySQL",
+          "oozie_user" : "oozie",
+          "content" : "{{ oozie_env_content  }}"
+        }
+      },
+      "oozie-site" : {
+        "properties":{
+          "oozie.db.schema.name" : "{{ cluster_env }}_oozie",
+          "oozie.service.JPAService.create.db.schema" : "false",
+          "oozie.service.JPAService.jdbc.driver" : "com.mysql.jdbc.Driver",
+          "oozie.service.JPAService.jdbc.username" : "{{ cluster_env }}_oozie",
+          "oozie.service.JPAService.jdbc.password" : "{{ rds_oozie_password }}",
+          "oozie.service.JPAService.jdbc.url" : "jdbc:mysql://{{ rds_hostname }}/{{ cluster_env }}_oozie?createDatabaseIfNoExist=true&useSSL=true&requireSSL=true"
+        }
+      },
+      "ssl-server" : {
+        "properties" : {
+          "ssl.server.truststore.location" : "/etc/pki/java/cacerts",
+          "ssl.server.truststore.password" : "{{ truststore_password }}",
+          "ssl.server.keystore.location" : "/etc/security/serverKeys/keystore.jks",
+          "ssl.server.keystore.password" : "{{ keystore_password }}",
+          "ssl.server.keystore.keypassword" : "{{ keystore_key_password }}"
+        }
+      },
+      "kafka-broker" : {
+        "properties" : {
+          "ssl.key.password" : "{{ keystore_key_password }}",
+          "ssl.keystore.password" : "{{ keystore_password }}",
+          "ssl.keystore.location" : "/etc/security/serverKeys/keystore.jks",
+          "ssl.truststore.location" : "/etc/pki/java/cacerts",
+          "ssl.truststore.password" : "{{ truststore_password }}"
+        }
+      },
+      "hdfs-site":{
+        "properties" : {
+          "dfs.namenode.secondary.https-address" : "0.0.0.0:50091"
+        }
+      },
+      "mapred-site" : {
+        "properties" : {
+          "mapreduce.jobhistory.webapp.https.address" : "0.0.0.0:19890"
+        }
+      }       
+    }
+  ],
+  "host_groups" :[
+    {
+      "name" : "host_group_1",
+      "hosts" : [
+        {
+          "fqdn" : "{{ datanode_1_hostname }}"
+        }
+      ]
+    },
+    {
+      "name" : "host_group_2",
+      "hosts" : [
+        {
+          "fqdn" : "{{ datanode_2_hostname }}"
+        }
+      ]
+    },
+    {
+      "name" : "host_group_3",
+      "hosts" : [
+        {
+          "fqdn" : "{{ ambari_hostname }}"
+        }
+      ]
+    },
+    {
+      "name" : "host_group_4",
+      "hosts" : [
+        {
+          "fqdn" : "{{ namenode_hostname }}"
+        }
+      ]
+    }
+  ]
+}

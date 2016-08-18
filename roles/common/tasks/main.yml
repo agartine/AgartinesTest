@@ -1,0 +1,133 @@
+######### Resize root partition if needed ##############     
+# common tasks for all hadoop nodes #
+# - name: install xfs
+#   become: yes
+#   yum: name=xfsprogs state=installed
+
+# # configure hadoop log drive
+# - name: create hadoop log mount points
+#   become: yes
+#   file: path={{ item }} state=directory
+#   with_items: "{{ hadoop_log_mount_point }}"
+
+# - name: create filesystem (if not already created)
+#   become: yes
+#   filesystem: fstype=xfs dev={{ item }}
+#   with_items: "{{ hadoop_log_device }}"
+
+# - name: mount hadoopfs drives
+#   become: yes
+#   mount: name={{ item.1 }} src={{ hadoop_log_device.0[item.0] }} fstype=xfs opts=noatime state=mounted
+#   with_indexed_items: "{{ hadoop_log_mount_point }}"
+# # end configure hadoop log drive
+
+# # configure hadoopfs drives
+# - name: create hadoop filesystem mount points
+#   become: yes
+#   file: path={{ item }} state=directory
+#   with_items: "{{ hadoop_fs_mount_points }}"
+
+# - name: create hadoopfs filesystem (if not already created)
+#   become: yes
+#   filesystem: fstype=xfs dev={{ item }}
+#   with_items: "{{ hadoop_fs_devices }}"
+
+# - name: mount hadoopfs drives
+#   become: yes
+#   mount: name={{ item.1 }} src={{ hadoop_fs_devices.0[item.0] }} fstype=xfs opts=noatime state=mounted
+#   with_indexed_items: "{{ hadoop_fs_mount_points }}"
+# end configure hadoopfs drives
+
+# - name: resize root partition
+#   script: ./scripts/resize-root.sh            
+#   when: ansible_devices.xvda.size != ansible_devices.xvda.partitions.xvda1.size
+
+# - name: reboot
+#   command: shutdown -r now "Ansible updates triggered"
+#   async: 0
+#   poll: 0
+#   ignore_errors: true
+#   when: ansible_devices.xvda.size != ansible_devices.xvda.partitions.xvda1.size
+
+# - name: wait for reboot
+#   local_action: wait_for host="{{ inventory_hostname }}" state=started delay=30 port=22
+#   when: ansible_devices.xvda.size != ansible_devices.xvda.partitions.xvda1.size
+
+# - command: resize2fs /dev/xvda1
+#   become: true
+#   when: ansible_devices.xvda.size != ansible_devices.xvda.partitions.xvda1.size
+
+# ######### END Resize root partition ############## 
+
+# - name: disable transparent huge pages, copy script
+#   become: yes
+#   copy: src=./scripts/disable-transparent-hugepages dest=/etc/init.d/disable-transparent-hugepages mode=755
+
+# - name: add dthp to chkconfig
+#   become: yes
+#   service: name=disable-transparent-hugepages enabled=yes
+
+- name: install ntpd
+  yum: name=ntp state=installed
+
+- name: enable & start ntpd
+  service: name=ntpd enabled=yes state=started
+
+- name: install mysql connector
+  yum: name=mysql-connector-java state=installed
+
+- name: install unzip
+  yum: name=unzip state=installed
+
+- include: hosts-file.yml
+
+- name: install openjdk 1.8
+  yum: name=java-1.8.0-openjdk-devel state=latest
+
+# ######## Install ambari agent
+- name: download .repo for ambari
+  get_url: url="http://public-repo-1.hortonworks.com/ambari/centos7/2.x/updates/2.2.2.0/ambari.repo" dest=/etc/yum.repos.d/ambari.repo force=yes
+
+- name: install ambari agent
+  yum: name=ambari-agent state=latest
+
+- name: update ambari-agent.ini
+  template: src=ambari-agent.ini dest=/etc/ambari-agent/conf/ambari-agent.ini
+
+- name: start ambari-agent
+  service: name=ambari-agent state=started
+
+- name: get java library path
+  shell: readlink -f /usr/bin/java | sed "s:jre/bin/java::"
+  register: java_home
+
+# install unlimited encryption jdk files
+- name: unarchive JCE for jdk 1.8
+  unarchive: src=./jce_policy-8.zip dest={{ java_home.stdout_lines[0] }}lib/
+
+- name: copy local_policy jar to security lib folder
+  copy: src={{ java_home.stdout_lines[0] }}lib/UnlimitedJCEPolicyJDK8/local_policy.jar dest={{ java_home.stdout_lines[0] }}jre/lib/security/ remote_src=true force=yes
+
+- name: copy US_export_policy jar to security lib folder
+  copy: src={{ java_home.stdout_lines[0] }}lib/UnlimitedJCEPolicyJDK8/US_export_policy.jar dest={{ java_home.stdout_lines[0] }}jre/lib/security/ remote_src=true force=yes
+
+# ##########################################
+# # Add AWS RDS Root CA to java keytool
+# ##########################################
+- name: install ca-certificates
+  yum: name=ca-certificates state=latest
+
+- name: copy pem files to server for import into trust store
+  copy: src=trusted-ca/ dest=/etc/pki/ca-trust/source/anchors/
+
+- name: import certificates 
+  shell: update-ca-trust extract
+
+- name: ensure correct permissions on trust store
+  file: path=/etc/pki/ca-trust/extracted/java/cacerts mode="u=r,g=r,o=r"
+
+##########################################
+# Generate client certificates
+##########################################
+
+- include: cert-gen-distribute.yml

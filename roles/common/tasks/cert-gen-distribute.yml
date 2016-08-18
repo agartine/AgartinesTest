@@ -1,0 +1,83 @@
+# Generate and distribute certificates to all nodes
+# 1. Download the intermediate signing key from secured S3 bucket
+# 2. for each host:
+#   i.  Generate .key, .csr
+#   ii.   Sign the .csr with the intermediate key, creating the .crt file
+#   iii.  Convert the private key to pkcs12
+#         # need to generate a password for the cert files and insert it
+#         # into the hosts file
+#   iv.   Import pkcs12 into keystore 
+#   v.    Copy to host (same password for all of them)
+
+- set_fact:
+    datalake_hostname: "{{ hostvars[ansible_eth0.ipv4.address].ec2_tag_NodeType|lower }}-{{ ansible_eth0.ipv4.address.split('.')[3] }}.{{ hostvars[ansible_eth0.ipv4.address].ec2_tag_Environment|lower }}.{{ datalake_name }}.datalake"
+
+- name: Copy openssl.cnf to hosts
+  copy: 
+    src: openssl.cnf 
+    dest: /home/centos/openssl.cnf
+
+- name: Generate .key
+  shell: openssl genrsa -out {{ datalake_hostname }}.key.pem 2048
+  args:
+    creates: "{{ datalake_hostname }}.key.pem"
+
+- name: Generate .csr
+  shell: openssl req -config openssl.cnf -key {{ datalake_hostname }}.key.pem -new -sha256 -out {{ datalake_hostname }}.csr.pem -subj "/C=US/ST=CA/L=Los Angeles/O=VPICU/OU=Datalake/CN={{ datalake_hostname }}"
+  args:  
+    creates: "{{ datalake_hostname }}.csr.pem"
+
+- name: Get CSRs
+  fetch:
+    src: /home/centos/{{ datalake_hostname }}.csr.pem
+    dest: csr/
+    flat: yes
+
+- name: Copy .csrs to the CA server
+  local_action: shell rsync -r --rsync-path='sudo rsync' --ignore-existing csr/ ec2-user@{{ ca_server }}:/root/ca/intermediate/csr/
+  become: no
+  run_once: true
+
+- name: Sign the CSRs on the signing server
+  shell: openssl ca -batch -passin pass:{{ ca_key_passphrase }} -config intermediate/openssl.cnf -extensions server_cert -days 375 -notext -md sha256 -in intermediate/csr/{{ hostvars[item].datalake_hostname }}.csr.pem -out intermediate/certs/{{ hostvars[item].datalake_hostname }}.cert.pem
+  args:
+    chdir: /root/ca
+    creates: intermediate/certs/{{ hostvars[item].datalake_hostname }}.cert.pem
+  become: yes
+  remote_user: ec2-user
+  run_once: true
+  delegate_to: "{{ ca_server }}"
+  with_items: "{{ play_hosts }}"
+
+# TODO: download and verify certificates 
+# openssl verify -CAfile ca-chain.cert.pem datanode-136.production.vpicu.datalake.cert.pem
+
+# TODO: redo this so we dont grab every single cert
+- name: Download certs to local machine
+  local_action: shell rsync -rz --rsync-path='sudo rsync' --ignore-existing ec2-user@{{ ca_server }}:/root/ca/intermediate/certs/ certs/
+  become: no
+  run_once: true
+
+- name: Copy signed certs to the host machines
+  copy: src=certs/{{ datalake_hostname }}.cert.pem dest=/home/centos/
+
+- name: Combine key & cert into pkcs12
+  shell: openssl pkcs12 -export -in {{ datalake_hostname }}.cert.pem -inkey {{ datalake_hostname }}.key.pem -out {{ datalake_hostname }}.p12 -name {{ datalake_hostname }} -passin pass:password -passout pass:password
+
+- name: create serverkey path 
+  file: path=/etc/security/serverKeys/ state=directory
+
+# TODO: modify to remove the existing keystore if needed (parameterize)
+- name: Import p12 file into keystore
+  shell: keytool -importkeystore -srckeystore {{ datalake_hostname }}.p12 -srcstoretype PKCS12 -srcstorepass password -alias {{ datalake_hostname }} -deststorepass {{ keystore_password }} -destkeypass {{ keystore_password }} -destkeystore /etc/security/serverKeys/keystore.jks
+  args:
+    creates: /etc/security/serverKeys/keystore.jks
+
+- name: remove .p12 file (cleanup)
+  file: path=/home/centos/{{ datalake_hostname }}.p12 state=absent
+
+- name: create hadoop group (need to create in advance to assign permissions correctly)
+  group: name=hadoop state=present
+
+- name: Set permissions on keystore and copy to default directory
+  file: path=/etc/security/serverKeys/keystore.jks group=hadoop owner=root mode="u=r,g=r,o-rwx"

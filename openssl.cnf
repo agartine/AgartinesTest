@@ -1,0 +1,119 @@
+[ ca ]
+# `man ca`
+default_ca = CA_default
+default_md = sha256
+
+[ CA_default ]
+# Directory and file locations.
+dir		= /root/ca/intermediate
+certs		= $dir/certs
+crl_dir		= $dir/crl
+new_certs_dir	= $dir/newcerts
+database	= $dir/index.txt
+serial		= $dir/serial
+RANDFILE	= $dir/private/.rand
+default_md = sha256
+
+# rookey and root cert
+private_key	= $dir/private/intermediate.key.pem
+certificate	= $dir/certs/intermediate.cert.pem
+
+# CRLs
+crlnumber	= $dir/crlnumber
+crl		= $dir/crl/intermediate.crl.pem
+crl_extensions	= crl_ext
+default_crl_days = 30
+preserve	= no
+policy		= policy_loose
+
+[ policy_strict ]
+# root ca only sign certs that match
+# because it only signs intermediates
+countryName		= match
+stateOrProvinceName	= match
+organizationName	= match
+organizationalUnitName	= optional
+commonName		= supplied
+emailAddress		= optional
+
+[ policy_loose ]
+# allow intermediate ca to sign more
+countryName 		= optional
+stateOrProvinceName	= optional
+localityName		= optional
+commonName		= supplied
+emailAddress		= optional
+
+[ req ]
+default_bits		= 2048
+distinguished_name	= req_distinguished_name
+string_mask		= utf8only
+
+# SHA-1 is deprecated
+default_md = sha256
+
+# -x509 option
+x509_extensions		= v3_ca
+
+[ req_distinguished_name ]
+countryName		= Country Name (2 letter code)
+stateOrProvinceName	= State or Province Name
+localityName		= Locality Name
+0.organizationName	= Organization Name
+organizationalUnitName 	= Organizational Unit Name
+commonName		= Common Name
+emailAddress		= Email Address
+
+#defaults
+countryName_default	= US
+stateOrProvinceName_default = CA
+localityName_default	= Los Angeles
+0.organizationName_default = VPICU
+organizationalUnitName_default = Datalake
+emailAddress_default	= sysadmin@vpicu.net
+
+[ v3_ca ]
+# `man x508v3_config`
+subjectKeyIdentifier = hash
+authorityKeyIdentifier = keyid:always,issuer
+basicConstraints = critical, CA:true
+keyUsage = critical, digitalSignature, cRLSign, keyCertSign
+
+[ v3_intermediate_ca ]
+subjectKeyIdentifier = hash
+authorityKeyIdentifier = keyid:always,issuer
+basicConstraints = critical, CA:true, pathlen:0
+keyUsage = ctriical, digitalSignature, cRLSign, keyCertSign
+
+[ usr_cert ]
+# ext for client certs
+basicConstraints = CA:FALSE
+nsCertType = client, email
+nsComment = "OpenSSL Generated Client Certificate"
+subjectKeyIdentifier = hash
+authorityKeyIdentifier = keyid,issuer
+keyUsage = critical, nonRepudiation, digitalSignature, keyEncipherment
+extendedKeyUsage = clientAuth, emailProtection
+
+[ server_cert ]
+# extensions for server certs
+basicConstraints = CA:FALSE
+nsCertType = server
+nsComment = "OpenSSL Generated Server Certificate"
+subjectKeyIdentifier = hash
+authorityKeyIdentifier = keyid,issuer:always
+keyUsage = critical, digitalSignature, keyEncipherment
+extendedKeyUsage = serverAuth
+
+[ crl_ext ]
+authorityKeyIdentifier = keyid:always
+
+[ ocsp ]
+# `man ocsp`
+basicConstraints = CA:FALSE
+subjectKeyIdentifier = hash
+authorityKeyIdentifier = keyid,issuer
+keyUsage = critical, digitalSignature
+extendedKeyUsage = critical, OCSPSigning
+
+

@@ -1,0 +1,8 @@
+hadoop_log_mount_point:
+  - ['/var/log']
+hadoop_log_device:
+  - ['/dev/xvdb']
+hadoop_fs_mount_points:
+  - ['/data1','/data2']
+hadoop_fs_devices:
+  - ['/dev/xvdc', '/dev/xvdd']

@@ -1,0 +1,118 @@
+---
+- hosts: tag_Name_{{ lookup('env', 'DATALAKE_NAME') }}_vpn*
+  vars:
+    openvpn_password: "{{ lookup('env', 'OPENVPN_PASSWORD') }}"
+    ssh_users:
+      - name: root
+        key: "{{ lookup('file', 'datalake-vpn.root.pub') }}"
+    failover_opts:
+      - name: "dbpush.hosts.0.enable"
+        key: "true"
+      - name: "dbpush.hosts.0.internal"
+        key: "PRIMARY"
+      - name: "dbpush.hosts.0.password"
+        key: ""
+      - name: "dbpush.hosts.0.public"
+        key: "{{ lookup('env', 'DATALAKE_NAME') }}-vpn-a.vpicu.net"
+      - name: "dbpush.hosts.0.ssh_port"
+        key: "22"
+      - name: "dbpush.hosts.0.username"
+        key: "root"
+      - name: "dbpush.hosts.1.enable"
+        key: "true"
+      - name: "dbpush.hosts.1.internal"
+        key: "SECONDARY"
+      - name: "dbpush.hosts.1.password"
+        key: ""
+      - name: "dbpush.hosts.1.public"
+        key: "{{ lookup('env', 'DATALAKE_NAME') }}-vpn-b.vpicu.net"
+      - name: "dbpush.hosts.1.ssh_port"
+        key: "22"
+      - name: "dbpush.hosts.1.username"
+        key: "root"
+      - name: "failover.mode"
+        key: "none"
+
+  name: Configure OpenVPN servers
+
+  remote_user: openvpnas
+  become: yes
+
+  tasks:
+
+    # install pre-req packages
+    - name: update package caches (yum)
+      yum: update_cache=yes cache_valid_time=3600
+      when: ansible_os_family == "RedHat"
+    - name: update package caches (apt-get)
+      apt: update_cache=yes cache_valid_time=3600
+      when: ansible_os_family == "Debian"
+    - name: install python tools
+      package: name=python-setuptools state=installed
+    - name: install pip
+      easy_install: name=pip
+    - name: Install boto
+      pip: name=boto
+    - name: Install six
+      pip: name=six
+    - name: Install awscli
+      pip: name=awscli
+
+    - name: updated openvpn user pwd
+      user: name=openvpn password={{ openvpn_password }}
+
+    # one problem is this will always report that the instance has changed...
+    # need to pass arguments to it for the primary/backup server toggle
+    - name: run primary server setup
+      script: ./scripts/openvpn-config-primary.sh
+      become: no
+      when: "'Primary' in ec2_tag_Role"
+
+    - name: run secondary server setup
+      script: ./scripts/openvpn-config-secondary.sh
+      become: no
+      when: "'Secondary' in ec2_tag_Role"
+
+    - name: run server cli to change hostname
+      command: /usr/local/openvpn_as/scripts/sacli --key=host.name --value={{ ec2_tag_Name }}.vpicu.net ConfigPut
+      when: "'Primary' in ec2_tag_Role"
+      notify:
+      - restart openvpnas
+
+    - name: add failover options via sacli
+      command: /usr/local/openvpn_as/scripts/sacli --key={{ item.name }} --value={{ item.key }} ConfigPut
+      when: "'Primary' in ec2_tag_Role"
+      with_items: "{{failover_opts}}"
+      notify:
+      - restart openvpnas
+
+    # allow ssh to root using a key between servers
+    - name: add authorized ssh keys
+      authorized_key: user={{ item.name }} key="{{ item.key }}" state=present
+      with_items: "{{ssh_users}}"
+
+    - name: copy ssh private/pub key
+      s3: bucket=vpicu-config object=/datalake/datalake-vpn.root.key dest=/root/.ssh/datalake-vpn.root.key mode=get overwrite=different ec2_access_key={{ lookup('env', 'AWS_ACCESS_KEY_ID') }} ec2_secret_key={{ lookup('env', 'AWS_SECRET_ACCESS_KEY') }}
+
+
+    #remove ca.key file (leftover from self signed)
+    - file: path=/usr/local/openvpn_as/etc/web-ssl/ca.key state=absent
+
+    #install the SSL certs
+    #because the filenames are different, the sync doesnt work correctly and the file is always retrieved again from S3
+    - name: Copy *.vpicu.net private key
+      s3: bucket=vpicu-config object=/ssl/wildcard-vpicunet.key dest=/usr/local/openvpn_as/etc/web-ssl/server.key mode=get overwrite=different ec2_access_key={{ lookup('env', 'AWS_ACCESS_KEY_ID') }} ec2_secret_key={{ lookup('env', 'AWS_SECRET_ACCESS_KEY') }}
+      notify:
+      - restart openvpnas
+    - name: Copy *.vpicu.net public key
+      s3: bucket=vpicu-config object=/ssl/wildcard-vpicunet.crt dest=/usr/local/openvpn_as/etc/web-ssl/server.crt mode=get overwrite=different ec2_access_key={{ lookup('env', 'AWS_ACCESS_KEY_ID') }} ec2_secret_key={{ lookup('env', 'AWS_SECRET_ACCESS_KEY') }}
+      notify:
+      - restart openvpnas
+    - name: Copy CA certificate bundle
+      s3: bucket=vpicu-config object=/ssl/ca-bundle-vpicunet.crt dest=/usr/local/openvpn_as/etc/web-ssl/ca.crt mode=get overwrite=different ec2_access_key={{ lookup('env', 'AWS_ACCESS_KEY_ID') }} ec2_secret_key={{ lookup('env', 'AWS_SECRET_ACCESS_KEY') }}
+      notify:
+      - restart openvpnas
+
+  handlers:
+    - name: restart openvpnas
+      service: name=openvpnas state=restarted

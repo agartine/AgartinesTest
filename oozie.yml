@@ -1,0 +1,12 @@
+# Must specify EC2_REGION as env variable
+---
+- hosts: "tag_Name_{{ datalake_name }}_{{ cluster_env }}_*:&tag_Environment_{{ cluster_env }}"
+  gather_facts: true
+  remote_user: centos
+  vars:
+    datalake_name: "{{ lookup('env', 'DATALAKE_NAME') }}"
+    cluster_name: "{{ lookup('env', 'CLUSTER_NAME') }}"
+    cluster_env: "{{ lookup('env', 'ENVIRONMENT') }}"
+    ambari_hostname: "{{ lookup('env', 'AMBARI_HOSTNAME') }}"
+  roles:
+    - oozie

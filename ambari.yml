@@ -1,0 +1,54 @@
+# Must specify EC2_REGION as env variable
+---
+- hosts: "tag_Name_{{ datalake_name }}_{{ cluster_env }}_*:&tag_Environment_{{ cluster_env }}:&tag_Services_Ambari*"
+  gather_facts: true
+  become: yes
+  remote_user: centos
+  vars:
+    datalake_name: "{{ lookup('env', 'DATALAKE_NAME') }}"
+    cluster_env: "{{ lookup('env', 'ENVIRONMENT') }}"
+    rds_hostname: "{{ lookup('env', 'RDS_HOST' ) }}"
+  vars_prompt:
+    - name: rds_master_username
+      prompt: "Enter mysql master username"
+      private: false
+      default: master
+
+    - name: rds_master_password
+      prompt: "Enter mysql master password"
+      private: false
+      confirm: true
+      default: asdf1234
+
+    - name: rds_ambari_password
+      prompt: "Create {{ cluster_env }}_ambari mysql password"
+      default: asdf1234
+      confirm: true
+      private: true
+
+    - name: rds_hive_password
+      prompt: "Create {{ cluster_env }}_hive mysql password"
+      default: asdf1234
+      confirm: true
+      private: true
+
+    - name: rds_oozie_password
+      prompt: "Create {{ cluster_env }}_oozie mysql password"
+      default: asdf1234
+      confirm: true
+      private: true
+
+    - name: rds_rangeradmin_password
+      prompt: "Create {{ cluster_env }}_ranger mysql password"
+      default: asdf1234
+      confirm: true
+      private: true
+
+    - name: rds_rangerlogger_password
+      prompt: "Create {{ cluster_env }}_rangerlogger mysql password"
+      default: asdf1234
+      confirm: true
+      private: true
+
+  roles:
+    - ambari

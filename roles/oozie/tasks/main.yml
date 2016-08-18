@@ -1,0 +1,57 @@
+# Requires correct host file on local server
+- name: get Oozie server host 
+  uri:
+    url: https://{{ ambari_hostname }}:8443/api/v1/clusters/{{ cluster_name }}/services/OOZIE/components/OOZIE_SERVER?fields=host_components/HostRoles/host_name
+    method: GET
+    validate_certs: False
+    return_content: yes
+    user: admin
+    password: admin
+    force_basic_auth: true
+    headers:
+      X-Requested-By: ambari
+  run_once: true
+  register: ambari_result
+
+- set_fact: oozie_server_content="{{ ambari_result["content"]|from_json }}"
+- set_fact: oozie_server_hosts="{{ oozie_server_content["host_components"]|map(attribute="HostRoles.host_name")|join(',') }}"
+- set_fact: datalake_hostname="{{ hostvars[ansible_eth0.ipv4.address].ec2_tag_NodeType|lower }}-{{ ansible_eth0.ipv4.address.split('.')[3] }}.{{ hostvars[ansible_eth0.ipv4.address].ec2_tag_Environment|lower }}.{{ datalake_name }}.datalake"
+
+- name: Stop Oozie server
+  uri:
+    url: "https://{{ ambari_hostname }}:8443/api/v1/clusters/{{ cluster_name }}/hosts/{{ datalake_hostname }}/host_components/OOZIE_SERVER"
+    method: PUT
+    body: '{"HostRoles": {"state": "INSTALLED"}}'
+    validate_certs: False
+    user: admin
+    password: admin
+    force_basic_auth: true
+    status_code:
+      - 200
+      - 202
+    headers:
+      X-Requested-By: ambari
+  when: datalake_hostname in oozie_server_hosts
+
+- pause: prompt="Wait for oozie server to stop" seconds=10
+
+- name: Update the Oozie Server jar file
+  become: yes
+  shell: su -l oozie -c "/usr/hdp/current/oozie-server/bin/oozie-setup.sh prepare-war -secure"
+  when: datalake_hostname in oozie_server_hosts
+
+- name: Start Oozie server
+  uri:
+    url: "https://{{ ambari_hostname }}:8443/api/v1/clusters/{{ cluster_name }}/hosts/{{ datalake_hostname }}/host_components/OOZIE_SERVER"
+    method: PUT
+    body: '{"HostRoles": {"state": "STARTED"}}'
+    validate_certs: False
+    user: admin
+    password: admin
+    force_basic_auth: true
+    status_code:
+      - 200
+      - 202
+    headers:
+      X-Requested-By: ambari
+  when: datalake_hostname in oozie_server_hosts
