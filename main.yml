@@ -25,7 +25,7 @@
     datalake_name: "{{ lookup('env', 'DATALAKE_NAME') }}"
     vpc_base: "{{ lookup('env', 'VPC_BASE') }}"
     subnet_base: "{{ lookup('env', 'SUBNET_BASE') }}"
-    create_hue: False
+    create_hue: True
     ec2_hue_ami: ami-6df50a0d
     ec2_node_ami: ami-5af40b3a
     ec2_ca_ami: ami-6b7ab10b
@@ -85,7 +85,7 @@
       module: ec2
       key_name: "{{ cluster_node_key_name }}"
       group_id: "{{ cluster_security_group_id }}"
-      instance_type: c4.8xlarge
+      instance_type: c4.4xlarge
       image: "{{ ec2_node_ami }}"
       ebs_optimized: true
       exact_count: 1
@@ -109,7 +109,7 @@
       module: ec2
       key_name: "{{ cluster_node_key_name }}"
       group_id: "{{ cluster_security_group_id }}"
-      instance_type: c4.8xlarge
+      instance_type: c4.4xlarge
       image: "{{ ec2_node_ami }}"
       ebs_optimized: true
       exact_count: 1
@@ -134,7 +134,7 @@
       module: ec2
       key_name: "{{ cluster_node_key_name }}"
       group_id: "{{ cluster_security_group_id }}"
-      instance_type: c4.8xlarge
+      instance_type: c4.4xlarge
       image: "{{ ec2_node_ami }}"
       ebs_optimized: true
       exact_count: 3
