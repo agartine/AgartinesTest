@@ -1628,7 +1628,7 @@
           "hive.metastore.authorization.storage.checks" : "false",
           "hive.merge.mapfiles" : "true",
           "hive.exec.post.hooks" : "org.apache.hadoop.hive.ql.hooks.ATSHook",
-          "hive.server2.transport.mode" : "binary",
+          "hive.server2.transport.mode" : "http",
           "hive.server2.thrift.http.path" : "cliservice",
           "hive.enforce.sortmergebucketmapjoin" : "true",
           "hive.metastore.execute.setugi" : "true",
