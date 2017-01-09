@@ -25,11 +25,14 @@
     datalake_name: "{{ lookup('env', 'DATALAKE_NAME') }}"
     vpc_base: "{{ lookup('env', 'VPC_BASE') }}"
     subnet_base: "{{ lookup('env', 'SUBNET_BASE') }}"
-    create_hue: True
+    create_hue: False
     ec2_hue_ami: ami-6df50a0d
     ec2_node_ami: ami-5af40b3a
     ec2_ca_ami: ami-6b7ab10b
   tasks:
+
+  - debug: 
+      var: cluster_node_key_name
 
   ############################################################
   # first provision the datalake via cloudformation template #
@@ -90,7 +93,7 @@
       ebs_optimized: true
       exact_count: 1
       count_tag: 
-        NodeType: NameNode
+        Name: "{{ datalake_name }}-{{ cluster_env }}-NameNode"
         Environment: "{{ cluster_env }}"
       placement_group: "{{ pg_a }}"
       monitoring: yes
@@ -99,7 +102,7 @@
       assign_public_ip: no
       instance_tags:
         Name: "{{ datalake_name }}-{{ cluster_env }}-NameNode"
-        NodeType: NameNode
+        NodeType: "{{ datalake_name }}--NameNode"
         Environment: "{{ cluster_env }}"
       wait: yes
     register: nameNodes
@@ -114,7 +117,7 @@
       ebs_optimized: true
       exact_count: 1
       count_tag: 
-        Services: Ambari
+        Name: "{{ datalake_name }}-{{ cluster_env }}-Ambari"
         Environment: "{{ cluster_env }}"
       placement_group:  "{{ pg_a }}"
       monitoring: yes
@@ -123,7 +126,7 @@
       assign_public_ip: no
       instance_tags:
         Name: "{{ datalake_name }}-{{ cluster_env }}-Ambari"
-        NodeType: DataNode
+        NodeType: "{{ datalake_name }}--DataNode"
         Environment: "{{ cluster_env }}"
         Services: Ambari
       wait: yes
@@ -139,7 +142,7 @@
       ebs_optimized: true
       exact_count: 3
       count_tag:
-        NodeType: DataNode
+        NodeType: "{{ datalake_name }}--DataNode"
         Environment: "{{ cluster_env }}"
       placement_group: "{{ pg_a }}"
       monitoring: yes
@@ -148,7 +151,7 @@
       assign_public_ip: no
       instance_tags:
         Name: "{{ datalake_name }}-{{ cluster_env }}-DataNode"
-        NodeType: DataNode
+        NodeType: "{{ datalake_name }}--DataNode"
         Environment: "{{ cluster_env }}"
       wait: yes
     register: dataNodes
