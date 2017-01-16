@@ -93,8 +93,9 @@
       ebs_optimized: true
       exact_count: 1
       count_tag: 
-        Name: "{{ datalake_name }}-{{ cluster_env }}-NameNode"
+        NodeType: NameNode
         Environment: "{{ cluster_env }}"
+        Stack: "{{ datalake_name }}"
       placement_group: "{{ pg_a }}"
       monitoring: yes
       tenancy: "{{ tenancy }}"
@@ -102,8 +103,9 @@
       assign_public_ip: no
       instance_tags:
         Name: "{{ datalake_name }}-{{ cluster_env }}-NameNode"
-        NodeType: "{{ datalake_name }}--NameNode"
+        NodeType: "NameNode"
         Environment: "{{ cluster_env }}"
+        Stack: "{{ datalake_name }}"
       wait: yes
     register: nameNodes
 
@@ -117,8 +119,9 @@
       ebs_optimized: true
       exact_count: 1
       count_tag: 
-        Name: "{{ datalake_name }}-{{ cluster_env }}-Ambari"
+        NodeType: DataNode
         Environment: "{{ cluster_env }}"
+        Stack: "{{ datalake_name }}"
       placement_group:  "{{ pg_a }}"
       monitoring: yes
       tenancy: "{{ tenancy }}"
@@ -126,9 +129,10 @@
       assign_public_ip: no
       instance_tags:
         Name: "{{ datalake_name }}-{{ cluster_env }}-Ambari"
-        NodeType: "{{ datalake_name }}--DataNode"
+        NodeType: DataNode
         Environment: "{{ cluster_env }}"
         Services: Ambari
+        Stack: "{{ datalake_name }}"
       wait: yes
     register: ambariNodes
 
@@ -142,8 +146,9 @@
       ebs_optimized: true
       exact_count: 3
       count_tag:
-        NodeType: "{{ datalake_name }}--DataNode"
+        NodeType: DataNode
         Environment: "{{ cluster_env }}"
+        Stack: "{{ datalake_name }}"
       placement_group: "{{ pg_a }}"
       monitoring: yes
       tenancy: "{{ tenancy }}"
@@ -151,8 +156,9 @@
       assign_public_ip: no
       instance_tags:
         Name: "{{ datalake_name }}-{{ cluster_env }}-DataNode"
-        NodeType: "{{ datalake_name }}--DataNode"
+        NodeType: DataNode
         Environment: "{{ cluster_env }}"
+        Stack: "{{ datalake_name }}"
       wait: yes
     register: dataNodes
 

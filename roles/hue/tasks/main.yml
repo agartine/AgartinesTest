@@ -179,7 +179,7 @@
     replace: 'request_kwargs["verify"] = "/usr/lib/hue/vpicu-ca-bundle.pem"'
 # Avert your eyes again, dirty hack to connect hue to mysql via ssl
 - lineinfile:
-    dest: /usr/lib/hue/build/env/lib/python2.6/site-packages/Django-1.2.3-py2.6.egg/django/db/backends/mysql/base.py
+    dest: /usr/lib/hue/build/env/lib/python2.7/site-packages/Django-1.2.3-py2.6.egg/django/db/backends/mysql/base.py
     line: "            kwargs['ssl'] = {'ca':'/usr/lib/hue/rds-combined-ca-bundle.pem'}"
     regexp: kwargs\[\'ssl\'\] = 
     insertbefore: 'self\.connection = Database\.connect\(\*\*kwargs\)$'

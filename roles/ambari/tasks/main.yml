@@ -1,8 +1,8 @@
-- name: download .repo for ambari
-  get_url: url="http://public-repo-1.hortonworks.com/ambari/centos7/2.x/updates/2.2.2.0/ambari.repo" dest=/etc/yum.repos.d/ambari.repo force=yes
+#- name: download .repo for ambari
+#  get_url: url="http://public-repo-1.hortonworks.com/ambari/centos7/2.x/updates/2.4.2.0/ambari.repo" dest=/etc/yum.repos.d/ambari.repo force=yes
 
 - name: install ambari server package
-  yum: name=ambari-server state=latest enablerepo=Updates-ambari-2.2.2.0 
+  yum: name=ambari-server state=latest enablerepo=Updates-ambari-2.4.2.0 
 
 - name: install expect package
   yum: name=expect state=latest

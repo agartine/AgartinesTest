@@ -86,7 +86,7 @@
 
 # ######## Install ambari agent
 - name: download .repo for ambari
-  get_url: url="http://public-repo-1.hortonworks.com/ambari/centos7/2.x/updates/2.2.2.0/ambari.repo" dest=/etc/yum.repos.d/ambari.repo force=yes
+  get_url: url="http://public-repo-1.hortonworks.com/ambari/centos7/2.x/updates/2.4.2.0/ambari.repo" dest=/etc/yum.repos.d/ambari.repo force=yes
 
 - name: install ambari agent
   yum: name=ambari-agent state=latest
