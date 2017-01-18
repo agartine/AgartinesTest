@@ -96,7 +96,11 @@
   register: java_home
 
 - name: run ambari-server setup
-  shell: ambari-server setup -s -j {{ java_home.stdout_lines[0] }} --database=mysql --databasehost={{ rds_hostname }} --databaseport=3306 --databasename={{ ec2_tag_Environment }}_ambari --databaseusername={{ ec2_tag_Environment }}_ambari --databasepassword={{ rds_ambari_password }}
+  shell: ambari-server setup -s -j {{ java_home.stdout_lines[0] }} --database=mysql --databasehost={{ rds_hostname }} --databaseport=3306 --databasename={{ ec2_tag_Environment }}_ambari --databaseusername={{ ec2_tag_Environment }}_ambari --databasepassword={{ rds_ambari_password }} 
+
+- name: install mysql jdbc driver
+  shell: ambari-server setup --jdbc-db=mysql --jdbc-driver=/usr/share/java/mysql-connector-java.jar
+
 
 # read ambari properties file to see if api.ssl=true (ssl already setup)
 - fetch: src=/etc/ambari-server/conf/ambari.properties dest=ambari.properties flat=yes

@@ -15,33 +15,6 @@
       }
     },
     {
-      "zeppelin-config" : {
-        "properties_attributes" : { },
-        "properties" : {
-          "zeppelin.notebook.dir" : "notebook",
-          "zeppelin.ssl.keystore.type" : "JKS",
-          "zeppelin.ssl.truststore.path" : "conf/truststore",
-          "zeppelin.websocket.max.text.message.size" : "1024000",
-          "zeppelin.notebook.homescreen.hide" : "false",
-          "zeppelin.interpreters" : "org.apache.zeppelin.spark.SparkInterpreter,org.apache.zeppelin.spark.PySparkInterpreter,org.apache.zeppelin.spark.SparkSqlInterpreter,org.apache.zeppelin.spark.DepInterpreter,org.apache.zeppelin.markdown.Markdown,org.apache.zeppelin.angular.AngularInterpreter,org.apache.zeppelin.shell.ShellInterpreter,org.apache.zeppelin.jdbc.JDBCInterpreter,org.apache.zeppelin.phoenix.PhoenixInterpreter,org.apache.zeppelin.livy.LivySparkInterpreter,org.apache.zeppelin.livy.LivyPySparkInterpreter,org.apache.zeppelin.livy.LivySparkRInterpreter,org.apache.zeppelin.livy.LivySparkSQLInterpreter",
-          "zeppelin.notebook.s3.user" : "user",
-          "zeppelin.server.port" : "9995",
-          "zeppelin.ssl" : "false",
-          "zeppelin.notebook.homescreen" : " ",
-          "zeppelin.notebook.storage" : "org.apache.zeppelin.notebook.repo.VFSNotebookRepo",
-          "zeppelin.interpreter.connect.timeout" : "30000",
-          "zeppelin.anonymous.allowed" : "true",
-          "zeppelin.interpreter.dir" : "interpreter",
-          "zeppelin.ssl.truststore.type" : "JKS",
-          "zeppelin.ssl.keystore.path" : "conf/keystore",
-          "zeppelin.notebook.s3.bucket" : "zeppelin",
-          "zeppelin.server.allowed.origins" : "*",
-          "zeppelin.server.addr" : "0.0.0.0",
-          "zeppelin.ssl.client.auth" : "false"
-        }
-      }
-    },
-    {
       "zookeeper-log4j" : {
         "properties_attributes" : { },
         "properties" : {
@@ -73,15 +46,17 @@
           "oozie_user_nproc_limit" : "16000",
           "oozie_pid_dir" : "/var/run/oozie",
           "oozie_user_nofile_limit" : "32000",
+          "oozie_existing_mysql_database" : "MySQL",
           "oozie_log_dir" : "/var/log/oozie",
-          "content" : "\n#!/bin/bash\n\nif [ -d \"/usr/lib/bigtop-tomcat\" ]; then\n  export OOZIE_CONFIG=${OOZIE_CONFIG:-{{conf_dir}}}\n  export CATALINA_BASE=${CATALINA_BASE:-{{oozie_server_dir}}}\n  export CATALINA_TMPDIR=${CATALINA_TMPDIR:-/var/tmp/oozie}\n  export OOZIE_CATALINA_HOME=/usr/lib/bigtop-tomcat\nfi\n\n#Set JAVA HOME\nexport JAVA_HOME={{java_home}}\n\nexport JRE_HOME=${JAVA_HOME}\n\n# Set Oozie specific environment variables here.\n\n# Settings for the Embedded Tomcat that runs Oozie\n# Java System properties for Oozie should be specified in this variable\n#\n{% if java_version < 8 %}\nexport CATALINA_OPTS=\"$CATALINA_OPTS -Xmx{{oozie_heapsize}} -XX:MaxPermSize={{oozie_permsize}}\"\n{% else %}\nexport CATALINA_OPTS=\"$CATALINA_OPTS -Xmx{{oozie_heapsize}}\"\n{% endif %}\n# Oozie configuration file to load from Oozie configuration directory\n#\n# export OOZIE_CONFIG_FILE=oozie-site.xml\n\n# Oozie logs directory\n#\nexport OOZIE_LOG={{oozie_log_dir}}\n\n# Oozie pid directory\n#\nexport CATALINA_PID={{pid_file}}\n\n#Location of the data for oozie\nexport OOZIE_DATA={{oozie_data_dir}}\n\n# Oozie Log4J configuration file to load from Oozie configuration directory\n#\n# export OOZIE_LOG4J_FILE=oozie-log4j.properties\n\n# Reload interval of the Log4J configuration file, in seconds\n#\n# export OOZIE_LOG4J_RELOAD=10\n\n# The port Oozie server runs\n#\nexport OOZIE_HTTP_PORT={{oozie_server_port}}\n\n# The admin port Oozie server runs\n#\nexport OOZIE_ADMIN_PORT={{oozie_server_admin_port}}\n\n# The host name Oozie server runs on\n#\n# export OOZIE_HTTP_HOSTNAME=`hostname -f`\n\n# The base URL for callback URLs to Oozie\n#\n# export OOZIE_BASE_URL=\"http://${OOZIE_HTTP_HOSTNAME}:${OOZIE_HTTP_PORT}/oozie\"\nexport JAVA_LIBRARY_PATH={{hadoop_lib_home}}/native/Linux-amd64-64\n\n# At least 1 minute of retry time to account for server downtime during\n# upgrade/downgrade\nexport OOZIE_CLIENT_OPTS=\"${OOZIE_CLIENT_OPTS} -Doozie.connection.retry.count=5 \"\n\n{% if sqla_db_used or lib_dir_available %}\nexport LD_LIBRARY_PATH=\"$LD_LIBRARY_PATH:{{jdbc_libs_dir}}\"\nexport JAVA_LIBRARY_PATH=\"$JAVA_LIBRARY_PATH:{{jdbc_libs_dir}}\"\n{% endif %}",
+          "content" : "\n#!/bin/bash\n\nif [ -d \"/usr/lib/bigtop-tomcat\" ]; then\n  export OOZIE_CONFIG=${OOZIE_CONFIG:-{{conf_dir}}}\n  export CATALINA_BASE=${CATALINA_BASE:-{{oozie_server_dir}}}\n  export CATALINA_TMPDIR=${CATALINA_TMPDIR:-/var/tmp/oozie}\n  export OOZIE_CATALINA_HOME=/usr/lib/bigtop-tomcat\nfi\n\n#Set JAVA HOME\nexport JAVA_HOME={{java_home}}\n\nexport JRE_HOME=${JAVA_HOME}jre\n\n# Set Oozie specific environment variables here.\n\n# Settings for the Embedded Tomcat that runs Oozie\n# Java System properties for Oozie should be specified in this variable\n#\n{% if java_version < 8 %}\nexport CATALINA_OPTS=\"$CATALINA_OPTS -Xmx{{oozie_heapsize}} -XX:MaxPermSize={{oozie_permsize}}\"\n{% else %}\nexport CATALINA_OPTS=\"$CATALINA_OPTS -Xmx{{oozie_heapsize}}\"\n{% endif %}\n# Oozie configuration file to load from Oozie configuration directory\n#\n# export OOZIE_CONFIG_FILE=oozie-site.xml\n\n# Oozie logs directory\n#\nexport OOZIE_LOG={{oozie_log_dir}}\n\n# Oozie pid directory\n#\nexport CATALINA_PID={{pid_file}}\n\n#Location of the data for oozie\nexport OOZIE_DATA={{oozie_data_dir}}\n\n# Oozie Log4J configuration file to load from Oozie configuration directory\n#\n# export OOZIE_LOG4J_FILE=oozie-log4j.properties\n\n# Reload interval of the Log4J configuration file, in seconds\n#\n# export OOZIE_LOG4J_RELOAD=10\n\n# The port Oozie server runs\n#\n#export OOZIE_HTTP_PORT={{oozie_server_port}}\n\n# The admin port Oozie server runs\n#\nexport OOZIE_ADMIN_PORT={{oozie_server_admin_port}}\n\n# The host name Oozie server runs on\n#\nexport OOZIE_HTTP_HOSTNAME=`hostname`\n\n# The base URL for callback URLs to Oozie\n\nexport OOZIE_HTTPS_PORT=11443\nexport OOZIE_HTTPS_KEYSTORE_FILE=/etc/security/serverKeys/keystore.jks\nexport OOZIE_HTTPS_KEYSTORE_PASS=^v5SMwwjE^\n\nexport OOZIE_BASE_URL=\"https://${OOZIE_HTTP_HOSTNAME}:${OOZIE_HTTPS_PORT}/oozie\"\nexport JAVA_LIBRARY_PATH={{hadoop_lib_home}}/native/Linux-amd64-64\n\n# At least 1 minute of retry time to account for server downtime during\n# upgrade/downgrade\nexport OOZIE_CLIENT_OPTS=\"${OOZIE_CLIENT_OPTS} -Doozie.connection.retry.count=5 \"\n\n{% if sqla_db_used or lib_dir_available %}\nexport LD_LIBRARY_PATH=\"$LD_LIBRARY_PATH:{{jdbc_libs_dir}}\"\nexport JAVA_LIBRARY_PATH=\"$JAVA_LIBRARY_PATH:{{jdbc_libs_dir}}\"\n{% endif %}",
           "oozie_tmp_dir" : "/var/tmp/oozie",
           "oozie_admin_port" : "11001",
+          "oozie_ambari_database" : "MySQL",
           "oozie_heapsize" : "2048m",
           "oozie_data_dir" : "/data1/hadoop/oozie/data",
           "oozie_user" : "oozie",
           "oozie_admin_users" : "{oozie_user}, oozie-admin",
-          "oozie_database" : "Existing MySQL / MariaDB Database",
+          "oozie_database" : "Existing MySQL Database",
           "oozie_permsize" : "256m"
         }
       }
@@ -131,6 +106,14 @@
       }
     },
     {
+      "infra-solr-log4j" : {
+        "properties_attributes" : { },
+        "properties" : {
+          "content" : "# Licensed to the Apache Software Foundation (ASF) under one or more\n# contributor license agreements.  See the NOTICE file distributed with\n# this work for additional information regarding copyright ownership.\n# The ASF licenses this file to You under the Apache License, Version 2.0\n# (the \"License\"); you may not use this file except in compliance with\n# the License.  You may obtain a copy of the License at\n#\n#     http://www.apache.org/licenses/LICENSE-2.0\n#\n# Unless required by applicable law or agreed to in writing, software\n# distributed under the License is distributed on an \"AS IS\" BASIS,\n# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n# See the License for the specific language governing permissions and\n# limitations under the License.\n\n#  Logging level\ninfra.solr.log.dir={{infra_solr_log_dir}}\n#log4j.rootLogger=INFO, file, CONSOLE\nlog4j.rootLogger=WARN, file\n\nlog4j.appender.CONSOLE=org.apache.log4j.ConsoleAppender\n\nlog4j.appender.CONSOLE.layout=org.apache.log4j.PatternLayout\nlog4j.appender.CONSOLE.layout.ConversionPattern=%-4r [%t] %-5p %c %x [%X{collection} %X{shard} %X{replica} %X{core}] \\u2013 %m%n\n\n#- size rotation with log cleanup.\nlog4j.appender.file=org.apache.log4j.RollingFileAppender\nlog4j.appender.file.MaxFileSize=10MB\nlog4j.appender.file.MaxBackupIndex=9\n\n#- File to log to and log format\nlog4j.appender.file.File=${infra.solr.log.dir}/solr.log\nlog4j.appender.file.layout=org.apache.log4j.PatternLayout\nlog4j.appender.file.layout.ConversionPattern=%d{ISO8601} [%t] %-5p [%X{collection} %X{shard} %X{replica} %X{core}] %C (%F:%L) - %m%n\n\nlog4j.logger.org.apache.zookeeper=WARN\nlog4j.logger.org.apache.hadoop=WARN\n\n# set to INFO to enable infostream log messages\nlog4j.logger.org.apache.solr.update.LoggingInfoStream=OFF"
+        }
+      }
+    },
+    {
       "core-site" : {
         "properties_attributes" : {
           "final" : {
@@ -153,17 +136,17 @@
           "hadoop.proxyuser.livy.groups" : "*",
           "hadoop.proxyuser.hbase.groups" : "*",
           "hadoop.proxyuser.hbase.hosts" : "*",
-          "hadoop.proxyuser.hive.hosts" : "%HOSTGROUP::host_group_2%",
-          "hadoop.proxyuser.root.hosts" : "datanode-138.dev.test254.datalake",
+          "hadoop.proxyuser.hive.hosts" : "%HOSTGROUP::host_group_1%",
+          "hadoop.proxyuser.root.hosts" : "datanode-65.dev.test254.datalake",
           "ha.failover-controller.active-standby-elector.zk.op.retries" : "120",
           "hadoop.security.authentication" : "simple",
           "hadoop.proxyuser.hdfs.hosts" : "*",
           "ipc.client.connect.max.retries" : "50",
           "io.file.buffer.size" : "131072",
           "hadoop.proxyuser.livy.hosts" : "*",
-          "hadoop.proxyuser.oozie.hosts" : "%HOSTGROUP::host_group_2%",
-          "hadoop.proxyuser.dev_hive.hosts" : "*",
-          "hadoop.proxyuser.hcat.hosts" : "%HOSTGROUP::host_group_2%",
+          "hadoop.proxyuser.oozie.hosts" : "%HOSTGROUP::host_group_1%",
+          "hadoop.proxyuser.dev_hive.hosts" : "datanode-177.dev.test254.datalake",
+          "hadoop.proxyuser.hcat.hosts" : "%HOSTGROUP::host_group_1%",
           "hadoop.proxyuser.oozie.groups" : "*",
           "hadoop.proxyuser.dev_hive.groups" : "*",
           "net.topology.script.file.name" : "/etc/hadoop/conf/topology_script.py",
@@ -215,7 +198,7 @@
           "log.segment.bytes" : "1073741824",
           "offset.metadata.max.bytes" : "4096",
           "ssl.truststore.location" : "/etc/pki/java/cacerts",
-          "zookeeper.connect" : "%HOSTGROUP::host_group_1%:2181,%HOSTGROUP::host_group_2%:2181,%HOSTGROUP::host_group_3%:2181",
+          "zookeeper.connect" : "%HOSTGROUP::host_group_3%:2181,%HOSTGROUP::host_group_1%:2181,%HOSTGROUP::host_group_2%:2181",
           "port" : "6667",
           "zookeeper.sync.time.ms" : "2000",
           "num.replica.fetchers" : "1",
@@ -299,25 +282,6 @@
       }
     },
     {
-      "zeppelin-env" : {
-        "properties_attributes" : { },
-        "properties" : {
-          "zeppelin.spark.jar.dir" : "/apps/zeppelin",
-          "zeppelin.executor.mem" : "512m",
-          "zeppelin.server.kerberos.keytab" : "",
-          "zeppelin_log_dir" : "/var/log/zeppelin",
-          "log4j_properties_content" : "\nlog4j.rootLogger = INFO, dailyfile\nlog4j.appender.stdout = org.apache.log4j.ConsoleAppender\nlog4j.appender.stdout.layout = org.apache.log4j.PatternLayout\nlog4j.appender.stdout.layout.ConversionPattern=%5p [%d] ({%t} %F[%M]:%L) - %m%n\nlog4j.appender.dailyfile.DatePattern=.yyyy-MM-dd\nlog4j.appender.dailyfile.Threshold = INFO\nlog4j.appender.dailyfile = org.apache.log4j.DailyRollingFileAppender\nlog4j.appender.dailyfile.File = ${zeppelin.log.file}\nlog4j.appender.dailyfile.layout = org.apache.log4j.PatternLayout\nlog4j.appender.dailyfile.layout.ConversionPattern=%5p [%d] ({%t} %F[%M]:%L) - %m%n",
-          "shiro_ini_content" : "\n[users]\n# List of users with their password allowed to access Zeppelin.\n# To use a different strategy (LDAP / Database / ...) check the shiro doc at http://shiro.apache.org/configuration.html#Configuration-INISections\n#admin = password1\n#user1 = password2, role1, role2\n#user2 = password3, role3\n#user3 = password4, role2\n\n# Sample LDAP configuration, for user Authentication, currently tested for single Realm\n[main]\n#activeDirectoryRealm = org.apache.zeppelin.server.ActiveDirectoryGroupRealm\n#activeDirectoryRealm.systemUsername = CN=Administrator,CN=Users,DC=HW,DC=EXAMPLE,DC=COM\n#activeDirectoryRealm.systemPassword = Password1!\n#activeDirectoryRealm.hadoopSecurityCredentialPath = jceks://user/zeppelin/zeppelin.jceks\n#activeDirectoryRealm.searchBase = CN=Users,DC=HW,DC=TEST,DC=COM\n#activeDirectoryRealm.url = ldap://ad-nano.test.example.com:389\n#activeDirectoryRealm.groupRolesMap = \"\"\n#activeDirectoryRealm.authorizationCachingEnabled = true\n\n#ldapRealm = org.apache.shiro.realm.ldap.JndiLdapRealm\n#ldapRealm.userDnTemplate = uid={0},cn=users,cn=accounts,dc=example,dc=com\n#ldapRealm.contextFactory.url = ldap://ldaphost:389\n#ldapRealm.contextFactory.authenticationMechanism = SIMPLE\n#sessionManager = org.apache.shiro.web.session.mgt.DefaultWebSessionManager\n#securityManager.sessionManager = $sessionManager\n# 86,400,000 milliseconds = 24 hour\n#securityManager.sessionManager.globalSessionTimeout = 86400000\nshiro.loginUrl = /api/login\n\n[urls]\n# anon means the access is anonymous.\n# authcBasic means Basic Auth Security\n# To enfore security, comment the line below and uncomment the next one\n/api/version = anon\n/** = anon\n#/** = authc",
-          "zeppelin.executor.instances" : "2",
-          "zeppelin.server.kerberos.principal" : "",
-          "zeppelin_env_content" : "\n# Spark master url. eg. spark://master_addr:7077. Leave empty if you want to use local mode\nexport MASTER=yarn-client\nexport SPARK_YARN_JAR={{spark_jar}}\n\n\n# Where log files are stored.  PWD by default.\nexport ZEPPELIN_LOG_DIR={{zeppelin_log_dir}}\n\n# The pid files are stored. /tmp by default.\nexport ZEPPELIN_PID_DIR={{zeppelin_pid_dir}}\n\n\nexport JAVA_HOME={{java64_home}}\n\n# Additional jvm options. for example, export ZEPPELIN_JAVA_OPTS=\"-Dspark.executor.memory=8g -Dspark.cores.max=16\"\nexport ZEPPELIN_JAVA_OPTS=\"-Dhdp.version={{full_stack_version}} -Dspark.executor.memory={{executor_mem}} -Dspark.executor.instances={{executor_instances}} -Dspark.yarn.queue={{spark_queue}}\"\n\n\n# Zeppelin jvm mem options Default -Xmx1024m -XX:MaxPermSize=512m\n# export ZEPPELIN_MEM\n\n# zeppelin interpreter process jvm mem options. Defualt = ZEPPELIN_MEM\n# export ZEPPELIN_INTP_MEM\n\n# zeppelin interpreter process jvm options. Default = ZEPPELIN_JAVA_OPTS\n# export ZEPPELIN_INTP_JAVA_OPTS\n\n# Where notebook saved\n# export ZEPPELIN_NOTEBOOK_DIR\n\n# Id of notebook to be displayed in homescreen. ex) 2A94M5J1Z\n# export ZEPPELIN_NOTEBOOK_HOMESCREEN\n\n# hide homescreen notebook from list when this value set to \"true\". default \"false\"\n# export ZEPPELIN_NOTEBOOK_HOMESCREEN_HIDE\n\n# Bucket where notebook saved\n# export ZEPPELIN_NOTEBOOK_S3_BUCKET\n\n# User in bucket where notebook saved. For example bucket/user/notebook/2A94M5J1Z/note.json\n# export ZEPPELIN_NOTEBOOK_S3_USER\n\n# A string representing this instance of zeppelin. $USER by default\n# export ZEPPELIN_IDENT_STRING\n\n# The scheduling priority for daemons. Defaults to 0.\n# export ZEPPELIN_NICENESS\n\n\n#### Spark interpreter configuration ####\n\n## Use provided spark installation ##\n## defining SPARK_HOME makes Zeppelin run spark interpreter process using spark-submit\n##\n# (required) When it is defined, load it instead of Zeppelin embedded Spark libraries\nexport SPARK_HOME={{spark_home}}\n\n# (optional) extra options to pass to spark submit. eg) \"--driver-memory 512M --executor-memory 1G\".\n# export SPARK_SUBMIT_OPTIONS\n\n## Use embedded spark binaries ##\n## without SPARK_HOME defined, Zeppelin still able to run spark interpreter process using embedded spark binaries.\n## however, it is not encouraged when you can define SPARK_HOME\n##\n# Options read in YARN client mode\n# yarn-site.xml is located in configuration directory in HADOOP_CONF_DIR.\nexport HADOOP_CONF_DIR=/etc/hadoop/conf\n\n# Pyspark (supported with Spark 1.2.1 and above)\n# To configure pyspark, you need to set spark distribution's path to 'spark.home' property in Interpreter setting screen in Zeppelin GUI\n# path to the python command. must be the same path on the driver(Zeppelin) and all workers.\n# export PYSPARK_PYTHON\n\nexport PYTHONPATH=\"${SPARK_HOME}/python:${SPARK_HOME}/python/lib/py4j-0.8.2.1-src.zip\"\nexport SPARK_YARN_USER_ENV=\"PYTHONPATH=${PYTHONPATH}\"\n\n## Spark interpreter options ##\n##\n# Use HiveContext instead of SQLContext if set true. true by default.\n# export ZEPPELIN_SPARK_USEHIVECONTEXT\n\n# Execute multiple SQL concurrently if set true. false by default.\n# export ZEPPELIN_SPARK_CONCURRENTSQL\n\n# Max number of SparkSQL result to display. 1000 by default.\n# export ZEPPELIN_SPARK_MAXRESULT",
-          "zeppelin_user" : "zeppelin",
-          "zeppelin_pid_dir" : "/var/run/zeppelin",
-          "zeppelin_group" : "zeppelin"
-        }
-      }
-    },
-    {
       "hive-log4j" : {
         "properties_attributes" : { },
         "properties" : {
@@ -391,7 +355,7 @@
       "oozie-site" : {
         "properties_attributes" : { },
         "properties" : {
-          "oozie.base.url" : "http://%HOSTGROUP::host_group_2%:11000/oozie",
+          "oozie.base.url" : "http://%HOSTGROUP::host_group_1%:11000/oozie",
           "oozie.service.URIHandlerService.uri.handlers" : "org.apache.oozie.dependency.FSURIHandler,org.apache.oozie.dependency.HCatURIHandler",
           "oozie.service.HadoopAccessorService.kerberos.enabled" : "false",
           "oozie.action.retry.interval" : "30",
@@ -400,6 +364,7 @@
           "oozie.service.JPAService.jdbc.username" : "dev_oozie",
           "oozie.credentials.credentialclasses" : "hcat=org.apache.oozie.action.hadoop.HCatCredentials,hive2=org.apache.oozie.action.hadoop.Hive2Credentials",
           "oozie.services.ext" : "\n      org.apache.oozie.service.JMSAccessorService,org.apache.oozie.service.PartitionDependencyManagerService,org.apache.oozie.service.HCatAccessorService",
+          "oozie.service.JPAService.create.db.schema" : "false",
           "oozie.service.JPAService.jdbc.driver" : "com.mysql.jdbc.Driver",
           "oozie.authentication.type" : "simple",
           "oozie.service.AuthorizationService.security.enabled" : "true",
@@ -630,6 +595,14 @@
       }
     },
     {
+      "infra-solr-xml" : {
+        "properties_attributes" : { },
+        "properties" : {
+          "content" : "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n<!--\nLicensed to the Apache Software Foundation (ASF) under one or more\ncontributor license agreements.  See the NOTICE file distributed with\nthis work for additional information regarding copyright ownership.\nThe ASF licenses this file to You under the Apache License, Version 2.0\n(the \"License\"); you may not use this file except in compliance with\nthe License.  You may obtain a copy of the License at\n\nhttp://www.apache.org/licenses/LICENSE-2.0\n\nUnless required by applicable law or agreed to in writing, software\ndistributed under the License is distributed on an \"AS IS\" BASIS,\nWITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\nSee the License for the specific language governing permissions and\nlimitations under the License.\n-->\n<solr>\n  <solrcloud>\n    <str name=\"host\">${host:}</str>\n    <int name=\"hostPort\">${jetty.port:}</int>\n    <str name=\"hostContext\">${hostContext:solr}</str>\n    <int name=\"zkClientTimeout\">${zkClientTimeout:15000}</int>\n    <bool name=\"genericCoreNodeNames\">${genericCoreNodeNames:true}</bool>\n  </solrcloud>\n</solr>"
+        }
+      }
+    },
+    {
       "kafka-log4j" : {
         "properties_attributes" : { },
         "properties" : {
@@ -655,9 +628,18 @@
       "spark-thrift-sparkconf" : {
         "properties_attributes" : {
           "final" : {
-            "spark.eventLog.dir" : "true",
             "spark.eventLog.enabled" : "true",
+            "spark.eventLog.dir" : "true",
             "spark.history.fs.logDirectory" : "true"
+          },
+          "spark.eventLog.dir" : {
+            "final" : "true"
+          },
+          "spark.eventLog.enabled" : {
+            "final" : "true"
+          },
+          "spark.history.fs.logDirectory" : {
+            "final" : "true"
           }
         },
         "properties" : {
@@ -823,7 +805,7 @@
           "hive.vectorized.execution.mapjoin.native.enabled" : "true",
           "hive.metastore.event.listeners" : "",
           "hive.server2.tez.default.queues" : "default",
-          "hive.llap.zk.sm.connectionString" : "%HOSTGROUP::host_group_1%:2181,%HOSTGROUP::host_group_3%:2181,%HOSTGROUP::host_group_2%:2181",
+          "hive.llap.zk.sm.connectionString" : "%HOSTGROUP::host_group_3%:2181,%HOSTGROUP::host_group_2%:2181,%HOSTGROUP::host_group_1%:2181",
           "hive.server2.tez.sessions.per.default.queue" : "1",
           "hive.server2.webui.use.ssl" : "false",
           "hive.llap.management.rpc.port" : "15004",
@@ -852,7 +834,18 @@
     {
       "ranger-hive-audit" : {
         "properties_attributes" : { },
-        "properties" : { }
+        "properties" : {
+          "xasecure.audit.destination.hdfs.batch.filespool.dir" : "/var/log/hive/audit/hdfs/spool",
+          "xasecure.audit.is.enabled" : "true",
+          "xasecure.audit.destination.hdfs" : "true",
+          "xasecure.audit.destination.solr" : "false",
+          "xasecure.audit.destination.solr.batch.filespool.dir" : "/var/log/hive/audit/solr/spool",
+          "xasecure.audit.destination.hdfs.dir" : "hdfs://%HOSTGROUP::host_group_4%:8020/ranger/audit",
+          "xasecure.audit.destination.solr.zookeepers" : "NONE",
+          "xasecure.audit.provider.summary.enabled" : "false",
+          "xasecure.audit.destination.solr.urls" : "",
+          "xasecure.audit.destination.db" : "true"
+        }
       }
     },
     {
@@ -980,6 +973,15 @@
       }
     },
     {
+      "infra-solr-client-log4j" : {
+        "properties_attributes" : { },
+        "properties" : {
+          "content" : "# Copyright 2011 The Apache Software Foundation\n#\n# Licensed to the Apache Software Foundation (ASF) under one\n# or more contributor license agreements.  See the NOTICE file\n# distributed with this work for additional information\n# regarding copyright ownership.  The ASF licenses this file\n# to you under the Apache License, Version 2.0 (the\n# \"License\"); you may not use this file except in compliance\n# with the License.  You may obtain a copy of the License at\n#\n#     http://www.apache.org/licenses/LICENSE-2.0\n#\n# Unless required by applicable law or agreed to in writing, software\n# distributed under the License is distributed on an \"AS IS\" BASIS,\n# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n# See the License for the specific language governing permissions and\n# limitations under the License.\n\nlog4j.rootLogger=INFO,file,stdout,stderr\n\nlog4j.appender.file=org.apache.log4j.RollingFileAppender\nlog4j.appender.file.File={{infra_client_log|default('/var/log/ambari-infra-solr-client/solr-client.log')}}\nlog4j.appender.file.MaxFileSize=80MB\nlog4j.appender.file.MaxBackupIndex=60\nlog4j.appender.file.layout=org.apache.log4j.PatternLayout\nlog4j.appender.file.layout.ConversionPattern=%d{DATE} %5p [%t] %c{1}:%L - %m%n\n\nlog4j.appender.stdout=org.apache.log4j.ConsoleAppender\nlog4j.appender.stdout.Threshold=INFO\nlog4j.appender.stdout.Target=System.out\nlog4j.appender.stdout.layout=org.apache.log4j.PatternLayout\nlog4j.appender.stdout.layout.ConversionPattern=%m%n\n\nlog4j.appender.stderr=org.apache.log4j.ConsoleAppender\nlog4j.appender.stderr.Threshold=ERROR\nlog4j.appender.stderr.Target=System.err\nlog4j.appender.stderr.layout=org.apache.log4j.PatternLayout\nlog4j.appender.stderr.layout.ConversionPattern=%m%n",
+          "infra_solr_client_log_dir" : "/var/log/ambari-infra-solr-client"
+        }
+      }
+    },
+    {
       "ranger-hbase-security" : {
         "properties_attributes" : { },
         "properties" : {
@@ -1007,7 +1009,7 @@
           "hbase.rpc.controllerfactory.class" : "",
           "hbase.client.retries.number" : "35",
           "hbase.hstore.compaction.max" : "10",
-          "hbase.zookeeper.quorum" : "%HOSTGROUP::host_group_1%,%HOSTGROUP::host_group_2%,%HOSTGROUP::host_group_3%",
+          "hbase.zookeeper.quorum" : "%HOSTGROUP::host_group_3%,%HOSTGROUP::host_group_1%,%HOSTGROUP::host_group_2%",
           "hbase.regionserver.info.port" : "16030",
           "hbase.rpc.protection" : "authentication",
           "zookeeper.znode.parent" : "/hbase-unsecure",
@@ -1066,7 +1068,12 @@
     {
       "ranger-hive-policymgr-ssl" : {
         "properties_attributes" : { },
-        "properties" : { }
+        "properties" : {
+          "xasecure.policymgr.clientssl.truststore" : "/usr/hdp/current/hive-server2/conf/ranger-plugin-truststore.jks",
+          "xasecure.policymgr.clientssl.keystore" : "/usr/hdp/current/hive-server2/conf/ranger-plugin-keystore.jks",
+          "xasecure.policymgr.clientssl.keystore.credential.file" : "jceks://file{{credential_file}}",
+          "xasecure.policymgr.clientssl.truststore.credential.file" : "jceks://file{{credential_file}}"
+        }
       }
     },
     {
@@ -1088,7 +1095,12 @@
     {
       "ranger-hive-plugin-properties" : {
         "properties_attributes" : { },
-        "properties" : { }
+        "properties" : {
+          "REPOSITORY_CONFIG_USERNAME" : "hive",
+          "jdbc.driverClassName" : "org.apache.hive.jdbc.HiveDriver",
+          "common.name.for.certificate" : "",
+          "policy_user" : "ambari-qa"
+        }
       }
     },
     {
@@ -1113,10 +1125,11 @@
           "xasecure.audit.destination.hdfs" : "true",
           "xasecure.audit.destination.solr" : "false",
           "xasecure.audit.destination.solr.batch.filespool.dir" : "/var/log/hadoop/yarn/audit/solr/spool",
-          "xasecure.audit.destination.hdfs.dir" : "hdfs://NAMENODE_HOSTNAME:8020/ranger/audit",
+          "xasecure.audit.destination.hdfs.dir" : "hdfs://%HOSTGROUP::host_group_4%:8020/ranger/audit",
           "xasecure.audit.destination.solr.zookeepers" : "NONE",
           "xasecure.audit.provider.summary.enabled" : "false",
-          "xasecure.audit.destination.solr.urls" : ""
+          "xasecure.audit.destination.solr.urls" : "",
+          "xasecure.audit.destination.db" : "true"
         }
       }
     },
@@ -1254,7 +1267,7 @@
           "dfs.namenode.write.stale.datanode.ratio" : "1.0f",
           "dfs.namenode.name.dir.restore" : "true",
           "dfs.heartbeat.interval" : "3",
-          "dfs.namenode.secondary.http-address" : "%HOSTGROUP::host_group_3%:50090",
+          "dfs.namenode.secondary.http-address" : "%HOSTGROUP::host_group_2%:50090",
           "dfs.namenode.checkpoint.txns" : "1000000",
           "dfs.journalnode.edits.dir" : "/hadoop/hdfs/journalnode",
           "dfs.support.append" : "true",
@@ -1269,7 +1282,7 @@
       "yarn-site" : {
         "properties_attributes" : { },
         "properties" : {
-          "yarn.resourcemanager.zk-address" : "%HOSTGROUP::host_group_1%:2181,%HOSTGROUP::host_group_2%:2181,%HOSTGROUP::host_group_3%:2181",
+          "yarn.resourcemanager.zk-address" : "%HOSTGROUP::host_group_3%:2181,%HOSTGROUP::host_group_1%:2181,%HOSTGROUP::host_group_2%:2181",
           "yarn.nodemanager.container-monitor.interval-ms" : "3000",
           "yarn.timeline-service.entity-group-fs-store.active-dir" : "/ats/active/",
           "yarn.nodemanager.linux-container-executor.group" : "hadoop",
@@ -1315,7 +1328,7 @@
           "yarn.resourcemanager.system-metrics-publisher.enabled" : "true",
           "yarn.timeline-service.client.max-retries" : "30",
           "yarn.timeline-service.client.retry-interval-ms" : "1000",
-          "yarn.timeline-service.http-authentication.proxyuser.root.hosts" : "datanode-138.dev.test254.datalake",
+          "yarn.timeline-service.http-authentication.proxyuser.root.hosts" : "datanode-65.dev.test254.datalake",
           "yarn.timeline-service.store-class" : "org.apache.hadoop.yarn.server.timeline.EntityGroupFSTimelineStore",
           "yarn.timeline-service.bind-host" : "0.0.0.0",
           "yarn.nodemanager.container-metrics.unregister-delay-ms" : "60000",
@@ -1329,7 +1342,7 @@
           "yarn.timeline-service.ttl-ms" : "2678400000",
           "yarn.nodemanager.health-checker.script.timeout-ms" : "60000",
           "yarn.nodemanager.aux-services.spark2_shuffle.class" : "org.apache.spark.network.yarn.YarnShuffleService",
-          "yarn.log.server.url" : "http://%HOSTGROUP::host_group_3%:19888/jobhistory/logs",
+          "yarn.log.server.url" : "http://%HOSTGROUP::host_group_2%:19888/jobhistory/logs",
           "yarn.timeline-service.entity-group-fs-store.group-id-plugin-classes" : "org.apache.tez.dag.history.logging.ats.TimelineCachePluginImpl,org.apache.spark.deploy.history.yarn.plugin.SparkATSPlugin",
           "yarn.resourcemanager.address" : "%HOSTGROUP::host_group_4%:8050",
           "yarn.timeline-service.recovery.enabled" : "true",
@@ -1364,7 +1377,7 @@
           "yarn.timeline-service.leveldb-state-store.path" : "/data1/hadoop/yarn/timeline",
           "yarn.timeline-service.entity-group-fs-store.done-dir" : "/ats/done/",
           "yarn.nodemanager.disk-health-checker.max-disk-utilization-per-disk-percentage" : "90",
-          "hadoop.registry.zk.quorum" : "%HOSTGROUP::host_group_1%:2181,%HOSTGROUP::host_group_2%:2181,%HOSTGROUP::host_group_3%:2181",
+          "hadoop.registry.zk.quorum" : "%HOSTGROUP::host_group_3%:2181,%HOSTGROUP::host_group_1%:2181,%HOSTGROUP::host_group_2%:2181",
           "yarn.nodemanager.log-aggregation.roll-monitoring-interval-seconds" : "3600",
           "yarn.nodemanager.container-executor.class" : "org.apache.hadoop.yarn.server.nodemanager.DefaultContainerExecutor",
           "yarn.resourcemanager.nodes.exclude-path" : "/etc/hadoop/conf/yarn.exclude",
@@ -1397,7 +1410,10 @@
         "properties_attributes" : { },
         "properties" : {
           "hive.service.metrics.hadoop2.component" : "hiveserver2",
+          "hive.security.authenticator.manager" : "org.apache.hadoop.hive.ql.security.SessionStateUserAuthenticator",
           "hive.security.authorization.enabled" : "false",
+          "hive.conf.restricted.list" : "hive.security.authenticator.manager,hive.security.authorization.manager,hive.users.in.admin.role",
+          "hive.security.authorization.manager" : "org.apache.hadoop.hive.ql.security.authorization.plugin.sqlstd.SQLStdHiveAuthorizerFactory",
           "hive.metastore.metrics.enabled" : "true",
           "hive.service.metrics.reporter" : "JSON_FILE, JMX, HADOOP2",
           "hive.service.metrics.file.location" : "/var/log/hive/hiveserver2-report.json"
@@ -1510,10 +1526,11 @@
           "xasecure.audit.destination.hdfs" : "true",
           "xasecure.audit.destination.solr" : "false",
           "xasecure.audit.destination.solr.batch.filespool.dir" : "/var/log/hadoop/hdfs/audit/solr/spool",
-          "xasecure.audit.destination.hdfs.dir" : "hdfs://NAMENODE_HOSTNAME:8020/ranger/audit",
+          "xasecure.audit.destination.hdfs.dir" : "hdfs://%HOSTGROUP::host_group_4%:8020/ranger/audit",
           "xasecure.audit.destination.solr.zookeepers" : "NONE",
           "xasecure.audit.provider.summary.enabled" : "false",
-          "xasecure.audit.destination.solr.urls" : ""
+          "xasecure.audit.destination.solr.urls" : "",
+          "xasecure.audit.destination.db" : "true"
         }
       }
     },
@@ -1540,6 +1557,33 @@
         "properties_attributes" : { },
         "properties" : {
           "fairscheduler_content" : "<?xml version=\"1.0\"?>\n            <allocations>\n            <pool name=\"default\">\n            <schedulingMode>FAIR</schedulingMode>\n            <weight>1</weight>\n            <minShare>2</minShare>\n            </pool>\n            </allocations>"
+        }
+      }
+    },
+    {
+      "infra-solr-env" : {
+        "properties_attributes" : { },
+        "properties" : {
+          "infra_solr_keystore_type" : "jks",
+          "infra_solr_kerberos_keytab" : "/etc/security/keytabs/infra_solr.service.keytab",
+          "infra_solr_keystore_location" : "/etc/security/serverKeys/infra.solr.keyStore.jks",
+          "infra_solr_truststore_type" : "jks",
+          "infra_solr_datadir" : "/opt/ambari_infra_solr/data",
+          "infra_solr_web_kerberos_keytab" : "/etc/security/keytabs/spnego.service.keytab",
+          "infra_solr_user" : "infra-solr",
+          "infra_solr_log_dir" : "/var/log/ambari-infra-solr",
+          "infra_solr_jmx_port" : "18886",
+          "infra_solr_maxmem" : "2048",
+          "content" : "#!/bin/bash\n# Licensed to the Apache Software Foundation (ASF) under one or more\n# contributor license agreements. See the NOTICE file distributed with\n# this work for additional information regarding copyright ownership.\n# The ASF licenses this file to You under the Apache License, Version 2.0\n# (the \"License\"); you may not use this file except in compliance with\n# the License. You may obtain a copy of the License at\n#\n# http://www.apache.org/licenses/LICENSE-2.0\n#\n# Unless required by applicable law or agreed to in writing, software\n# distributed under the License is distributed on an \"AS IS\" BASIS,\n# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n# See the License for the specific language governing permissions and\n# limitations under the License.\n\n# By default the script will use JAVA_HOME to determine which java\n# to use, but you can set a specific path for Solr to use without\n# affecting other Java applications on your server/workstation.\nSOLR_JAVA_HOME={{java64_home}}\n\n# Increase Java Min/Max Heap as needed to support your indexing / query needs\nSOLR_JAVA_MEM=\"-Xms{{infra_solr_min_mem}}m -Xmx{{infra_solr_max_mem}}m\"\n\n# Enable verbose GC logging\nGC_LOG_OPTS=\"-verbose:gc -XX:+PrintHeapAtGC -XX:+PrintGCDetails \\\n-XX:+PrintGCDateStamps -XX:+PrintGCTimeStamps -XX:+PrintTenuringDistribution -XX:+PrintGCApplicationStoppedTime\"\n\n# These GC settings have shown to work well for a number of common Solr workloads\nGC_TUNE=\"-XX:NewRatio=3 \\\n-XX:SurvivorRatio=4 \\\n-XX:TargetSurvivorRatio=90 \\\n-XX:MaxTenuringThreshold=8 \\\n-XX:+UseConcMarkSweepGC \\\n-XX:+UseParNewGC \\\n-XX:ConcGCThreads=4 -XX:ParallelGCThreads=4 \\\n-XX:+CMSScavengeBeforeRemark \\\n-XX:PretenureSizeThreshold=64m \\\n-XX:+UseCMSInitiatingOccupancyOnly \\\n-XX:CMSInitiatingOccupancyFraction=50 \\\n-XX:CMSMaxAbortablePrecleanTime=6000 \\\n-XX:+CMSParallelRemarkEnabled \\\n-XX:+ParallelRefProcEnabled\"\n\n# Set the ZooKeeper connection string if using an external ZooKeeper ensemble\n# e.g. host1:2181,host2:2181/chroot\n# Leave empty if not using SolrCloud\nZK_HOST=\"{{zookeeper_quorum}}{{infra_solr_znode}}\"\n\n# Set the ZooKeeper client timeout (for SolrCloud mode)\nZK_CLIENT_TIMEOUT=\"60000\"\n\n# By default the start script uses \"localhost\"; override the hostname here\n# for production SolrCloud environments to control the hostname exposed to cluster state\n#SOLR_HOST=\"192.168.1.1\"\n\n# By default the start script uses UTC; override the timezone if needed\n#SOLR_TIMEZONE=\"UTC\"\n\n# Set to true to activate the JMX RMI connector to allow remote JMX client applications\n# to monitor the JVM hosting Solr; set to \"false\" to disable that behavior\n# (false is recommended in production environments)\nENABLE_REMOTE_JMX_OPTS=\"true\"\n\n# The script will use SOLR_PORT+10000 for the RMI_PORT or you can set it here\nRMI_PORT={{infra_solr_jmx_port}}\n\n# Anything you add to the SOLR_OPTS variable will be included in the java\n# start command line as-is, in ADDITION to other options. If you specify the\n# -a option on start script, those options will be appended as well. Examples:\n#SOLR_OPTS=\"$SOLR_OPTS -Dsolr.autoSoftCommit.maxTime=3000\"\n#SOLR_OPTS=\"$SOLR_OPTS -Dsolr.autoCommit.maxTime=60000\"\n#SOLR_OPTS=\"$SOLR_OPTS -Dsolr.clustering.enabled=true\"\n\n# Location where the bin/solr script will save PID files for running instances\n# If not set, the script will create PID files in $SOLR_TIP/bin\nSOLR_PID_DIR={{infra_solr_piddir}}\n\n# Path to a directory where Solr creates index files, the specified directory\n# must contain a solr.xml; by default, Solr will use server/solr\nSOLR_HOME={{infra_solr_datadir}}\n\n# Solr provides a default Log4J configuration properties file in server/resources\n# however, you may want to customize the log settings and file appender location\n# so you can point the script to use a different log4j.properties file\nLOG4J_PROPS={{infra_solr_conf}}/log4j.properties\n\n# Location where Solr should write logs to; should agree with the file appender\n# settings in server/resources/log4j.properties\nSOLR_LOGS_DIR={{infra_solr_log_dir}}\n\n# Sets the port Solr binds to, default is 8983\nSOLR_PORT={{infra_solr_port}}\n\n# Be sure to update the paths to the correct keystore for your environment\n{% if infra_solr_ssl_enabled %}\nSOLR_SSL_KEY_STORE={{infra_solr_keystore_location}}\nSOLR_SSL_KEY_STORE_PASSWORD={{infra_solr_keystore_password}}\nSOLR_SSL_TRUST_STORE={{infra_solr_keystore_location}}\nSOLR_SSL_TRUST_STORE_PASSWORD={{infra_solr_keystore_password}}\nSOLR_SSL_NEED_CLIENT_AUTH=false\nSOLR_SSL_WANT_CLIENT_AUTH=false\n{% endif %}\n\n# Uncomment to set a specific SSL port (-Djetty.ssl.port=N); if not set\n# and you are using SSL, then the start script will use SOLR_PORT for the SSL port\n#SOLR_SSL_PORT=\n\n{% if security_enabled -%}\nSOLR_HOST=`hostname -f`\nSOLR_JAAS_FILE={{infra_solr_jaas_file}}\nSOLR_KERB_KEYTAB={{infra_solr_web_kerberos_keytab}}\nSOLR_KERB_PRINCIPAL={{infra_solr_web_kerberos_principal}}\nSOLR_KERB_NAME_RULES={{infra_solr_kerberos_name_rules}}\n\nSOLR_AUTHENTICATION_CLIENT_CONFIGURER=\"org.apache.solr.client.solrj.impl.Krb5HttpClientConfigurer\"\nSOLR_AUTHENTICATION_OPTS=\" -DauthenticationPlugin=org.apache.solr.security.KerberosPlugin -Djava.security.auth.login.config=$SOLR_JAAS_FILE -Dsolr.kerberos.principal=${SOLR_KERB_PRINCIPAL} -Dsolr.kerberos.keytab=${SOLR_KERB_KEYTAB} -Dsolr.kerberos.cookie.domain=${SOLR_HOST} -Dsolr.kerberos.name.rules=${SOLR_KERB_NAME_RULES}\"\n{% endif %}",
+          "infra_solr_kerberos_name_rules" : "DEFAULT",
+          "infra_solr_minmem" : "1024",
+          "infra_solr_port" : "8886",
+          "infra_solr_web_kerberos_principal" : "HTTP/_HOST@EXAMPLE.COM",
+          "infra_solr_pid_dir" : "/var/run/ambari-infra-solr",
+          "infra_solr_ssl_enabled" : "false",
+          "infra_solr_kerberos_principal" : "infra-solr",
+          "infra_solr_znode" : "/infra-solr",
+          "infra_solr_truststore_location" : "/etc/security/serverKeys/infra.solr.trustStore.jks"
         }
       }
     },
@@ -1577,10 +1621,11 @@
           "xasecure.audit.destination.hdfs" : "true",
           "xasecure.audit.destination.solr" : "false",
           "xasecure.audit.destination.solr.batch.filespool.dir" : "/var/log/kafka/audit/solr/spool",
-          "xasecure.audit.destination.hdfs.dir" : "hdfs://NAMENODE_HOSTNAME:8020/ranger/audit",
+          "xasecure.audit.destination.hdfs.dir" : "hdfs://%HOSTGROUP::host_group_4%:8020/ranger/audit",
           "xasecure.audit.destination.solr.zookeepers" : "NONE",
           "xasecure.audit.provider.summary.enabled" : "true",
-          "xasecure.audit.destination.solr.urls" : ""
+          "xasecure.audit.destination.solr.urls" : "",
+          "xasecure.audit.destination.db" : "true"
         }
       }
     },
@@ -1719,7 +1764,7 @@
           "mapreduce.task.io.sort.mb" : "1146",
           "mapreduce.cluster.administrators" : " hadoop",
           "mapreduce.reduce.shuffle.fetch.retry.timeout-ms" : "30000",
-          "mapreduce.jobhistory.address" : "%HOSTGROUP::host_group_3%:10020",
+          "mapreduce.jobhistory.address" : "%HOSTGROUP::host_group_2%:10020",
           "mapreduce.map.sort.spill.percent" : "0.7",
           "mapreduce.map.memory.mb" : "2048",
           "mapreduce.admin.reduce.child.java.opts" : "-server -XX:NewRatio=8 -Djava.net.preferIPv4Stack=true -Dhdp.version=${hdp.version}",
@@ -1732,7 +1777,7 @@
           "mapreduce.reduce.shuffle.parallelcopies" : "30",
           "mapreduce.jobhistory.webapp.https.address" : "0.0.0.0:19890",
           "mapreduce.jobhistory.done-dir" : "/mr-history/done",
-          "mapreduce.jobhistory.webapp.address" : "%HOSTGROUP::host_group_3%:19888",
+          "mapreduce.jobhistory.webapp.address" : "%HOSTGROUP::host_group_2%:19888",
           "mapreduce.reduce.shuffle.fetch.retry.enabled" : "1",
           "mapreduce.task.io.sort.factor" : "100",
           "mapreduce.jobhistory.recovery.store.leveldb.path" : "/hadoop/mapreduce/jhs",
@@ -1762,9 +1807,18 @@
       "spark2-thrift-sparkconf" : {
         "properties_attributes" : {
           "final" : {
-            "spark.eventLog.dir" : "true",
             "spark.eventLog.enabled" : "true",
+            "spark.eventLog.dir" : "true",
             "spark.history.fs.logDirectory" : "true"
+          },
+          "spark.eventLog.dir" : {
+            "final" : "true"
+          },
+          "spark.eventLog.enabled" : {
+            "final" : "true"
+          },
+          "spark.history.fs.logDirectory" : {
+            "final" : "true"
           }
         },
         "properties" : {
@@ -1830,7 +1884,7 @@
           "hive.metastore.execute.setugi" : "true",
           "hive.tez.smb.number.waves" : "0.5",
           "hive.server2.authentication.spnego.keytab" : "HTTP/_HOST@EXAMPLE.COM",
-          "hive.zookeeper.quorum" : "%HOSTGROUP::host_group_2%:2181,%HOSTGROUP::host_group_3%:2181,%HOSTGROUP::host_group_1%:2181",
+          "hive.zookeeper.quorum" : "%HOSTGROUP::host_group_1%:2181,%HOSTGROUP::host_group_2%:2181,%HOSTGROUP::host_group_3%:2181",
           "hive.mapjoin.bucket.cache.size" : "10000",
           "hive.metastore.kerberos.principal" : "hive/_HOST@EXAMPLE.COM",
           "hive.tez.auto.reducer.parallelism" : "true",
@@ -1892,17 +1946,18 @@
           "hive.tez.dynamic.partition.pruning.max.event.size" : "1048576",
           "hive.cbo.enable" : "true",
           "hive.exec.orc.encoding.strategy" : "SPEED",
+          "hive.server2.keystore.path" : "/etc/security/serverKeys/keystore.jks",
           "hive.optimize.constant.propagation" : "true",
           "hive.tez.container.size" : "2048",
           "hive.metastore.connect.retries" : "24",
           "hive.optimize.reducededuplication.min.reducer" : "4",
           "hive.tez.input.format" : "org.apache.hadoop.hive.ql.io.HiveInputFormat",
-          "hive.cluster.delegation.token.store.zookeeper.connectString" : "%HOSTGROUP::host_group_2%:2181,%HOSTGROUP::host_group_3%:2181,%HOSTGROUP::host_group_1%:2181",
-          "hive.metastore.uris" : "thrift://%HOSTGROUP::host_group_2%:9083",
+          "hive.cluster.delegation.token.store.zookeeper.connectString" : "%HOSTGROUP::host_group_1%:2181,%HOSTGROUP::host_group_2%:2181,%HOSTGROUP::host_group_3%:2181",
+          "hive.metastore.uris" : "thrift://%HOSTGROUP::host_group_1%:9083",
           "hive.server2.max.start.attempts" : "5",
           "hive.exec.dynamic.partition.mode" : "strict",
           "hive.server2.thrift.max.worker.threads" : "500",
-          "hive.server2.use.SSL" : "false",
+          "hive.server2.use.SSL" : "true",
           "hive.tez.java.opts" : "-server -Djava.net.preferIPv4Stack=true -XX:NewRatio=8 -XX:+UseNUMA -XX:+UseParallelGC -XX:+PrintGCDetails -verbose:gc -XX:+PrintGCTimeStamps",
           "hive.exec.submit.local.task.via.child" : "true",
           "hive.optimize.null.scan" : "true",
@@ -2017,15 +2072,15 @@
       "webhcat-site" : {
         "properties_attributes" : { },
         "properties" : {
-          "templeton.zookeeper.hosts" : "%HOSTGROUP::host_group_2%:2181,%HOSTGROUP::host_group_3%:2181,%HOSTGROUP::host_group_1%:2181",
+          "templeton.zookeeper.hosts" : "%HOSTGROUP::host_group_1%:2181,%HOSTGROUP::host_group_2%:2181,%HOSTGROUP::host_group_3%:2181",
           "webhcat.proxyuser.root.groups" : "*",
-          "webhcat.proxyuser.root.hosts" : "datanode-138.dev.test254.datalake",
+          "webhcat.proxyuser.root.hosts" : "datanode-65.dev.test254.datalake",
           "templeton.hadoop.queue.name" : "default",
           "templeton.hadoop" : "/usr/hdp/${hdp.version}/hadoop/bin/hadoop",
           "templeton.hive.extra.files" : "/usr/hdp/${hdp.version}/tez/conf/tez-site.xml,/usr/hdp/${hdp.version}/tez,/usr/hdp/${hdp.version}/tez/lib",
           "templeton.hcat.home" : "hive.tar.gz/hive/hcatalog",
           "templeton.override.enabled" : "false",
-          "templeton.hive.properties" : "hive.metastore.local=false,hive.metastore.uris=thrift://%HOSTGROUP::host_group_2%:9083,hive.metastore.sasl.enabled=false,hive.metastore.execute.setugi=true",
+          "templeton.hive.properties" : "hive.metastore.local=false,hive.metastore.uris=thrift://%HOSTGROUP::host_group_1%:9083,hive.metastore.sasl.enabled=false,hive.metastore.execute.setugi=true",
           "templeton.python" : "${env.PYTHON_CMD}",
           "templeton.storage.class" : "org.apache.hive.hcatalog.templeton.tool.ZooKeeperStorage",
           "templeton.streaming.jar" : "hdfs:///hdp/apps/${hdp.version}/mapreduce/hadoop-streaming.jar",
@@ -2125,10 +2180,11 @@
           "xasecure.audit.destination.hdfs" : "true",
           "xasecure.audit.destination.solr" : "false",
           "xasecure.audit.destination.solr.batch.filespool.dir" : "/var/log/hbase/audit/solr/spool",
-          "xasecure.audit.destination.hdfs.dir" : "hdfs://NAMENODE_HOSTNAME:8020/ranger/audit",
+          "xasecure.audit.destination.hdfs.dir" : "hdfs://%HOSTGROUP::host_group_4%:8020/ranger/audit",
           "xasecure.audit.destination.solr.zookeepers" : "NONE",
           "xasecure.audit.provider.summary.enabled" : "true",
-          "xasecure.audit.destination.solr.urls" : ""
+          "xasecure.audit.destination.solr.urls" : "",
+          "xasecure.audit.destination.db" : "true"
         }
       }
     },
@@ -2232,27 +2288,30 @@
       "hive-env" : {
         "properties_attributes" : { },
         "properties" : {
-          "hive_database" : "Existing MySQL / MariaDB Database",
-          "hcat_log_dir" : "/var/log/webhcat",
-          "hive_exec_orc_storage_strategy" : "SPEED",
           "webhcat_user" : "hcat",
           "hive_log_dir" : "/var/log/hive",
-          "hive_user" : "hive",
+          "hive_metastore_user_passwd" : "asdf1234",
           "hive_security_authorization" : "None",
           "hive_user_nproc_limit" : "16000",
-          "hive.metastore.heapsize" : "3715",
           "content" : "\n      export HADOOP_USER_CLASSPATH_FIRST=true  #this prevents old metrics libs from mapreduce lib from bringing in old jar deps overriding HIVE_LIB\n      if [ \"$SERVICE\" = \"cli\" ]; then\n      if [ -z \"$DEBUG\" ]; then\n      export HADOOP_OPTS=\"$HADOOP_OPTS -XX:NewRatio=12 -XX:MaxHeapFreeRatio=40 -XX:MinHeapFreeRatio=15 -XX:+UseNUMA -XX:+UseParallelGC -XX:-UseGCOverheadLimit\"\n      else\n      export HADOOP_OPTS=\"$HADOOP_OPTS -XX:NewRatio=12 -XX:MaxHeapFreeRatio=40 -XX:MinHeapFreeRatio=15 -XX:-UseGCOverheadLimit\"\n      fi\n      fi\n\n      # The heap size of the jvm stared by hive shell script can be controlled via:\n\n      if [ \"$SERVICE\" = \"metastore\" ]; then\n      export HADOOP_HEAPSIZE={{hive_metastore_heapsize}} # Setting for HiveMetastore\n      else\n      export HADOOP_HEAPSIZE={{hive_heapsize}} # Setting for HiveServer2 and Client\n      fi\n\n      export HADOOP_CLIENT_OPTS=\"$HADOOP_CLIENT_OPTS  -Xmx${HADOOP_HEAPSIZE}m\"\n\n      # Larger heap size may be required when running queries over large number of files or partitions.\n      # By default hive shell scripts use a heap size of 256 (MB).  Larger heap size would also be\n      # appropriate for hive server (hwi etc).\n\n\n      # Set HADOOP_HOME to point to a specific hadoop install directory\n      HADOOP_HOME=${HADOOP_HOME:-{{hadoop_home}}}\n\n      export HIVE_HOME=${HIVE_HOME:-{{hive_home_dir}}}\n\n      # Hive Configuration Directory can be controlled by:\n      export HIVE_CONF_DIR=${HIVE_CONF_DIR:-{{hive_config_dir}}}\n\n      # Folder containing extra libraries required for hive compilation/execution can be controlled by:\n      if [ \"${HIVE_AUX_JARS_PATH}\" != \"\" ]; then\n      if [ -f \"${HIVE_AUX_JARS_PATH}\" ]; then\n      export HIVE_AUX_JARS_PATH=${HIVE_AUX_JARS_PATH}\n      elif [ -d \"/usr/hdp/current/hive-webhcat/share/hcatalog\" ]; then\n      export HIVE_AUX_JARS_PATH=/usr/hdp/current/hive-webhcat/share/hcatalog/hive-hcatalog-core.jar\n      fi\n      elif [ -d \"/usr/hdp/current/hive-webhcat/share/hcatalog\" ]; then\n      export HIVE_AUX_JARS_PATH=/usr/hdp/current/hive-webhcat/share/hcatalog/hive-hcatalog-core.jar\n      fi\n\n      export METASTORE_PORT={{hive_metastore_port}}\n\n      {% if sqla_db_used or lib_dir_available %}\n      export LD_LIBRARY_PATH=\"$LD_LIBRARY_PATH:{{jdbc_libs_dir}}\"\n      export JAVA_LIBRARY_PATH=\"$JAVA_LIBRARY_PATH:{{jdbc_libs_dir}}\"\n      {% endif %}",
-          "hive_timeline_logging_enabled" : "true",
           "hive_txn_acid" : "off",
           "hive.client.heapsize" : "1024",
           "hive.heapsize" : "11147",
-          "hive_database_name" : "hive",
           "hive_database_type" : "mysql",
           "hive_user_nofile_limit" : "32000",
+          "hcat_pid_dir" : "/var/run/webhcat",
+          "hive_database" : "Existing MySQL Database",
+          "hcat_log_dir" : "/var/log/webhcat",
+          "hive_exec_orc_storage_strategy" : "SPEED",
+          "hive_existing_mysql_database" : "MySQL",
+          "hive_user" : "dev_hive",
+          "hive.metastore.heapsize" : "3715",
+          "hive_timeline_logging_enabled" : "true",
+          "hive_database_name" : "dev_hive",
           "hive_pid_dir" : "/var/run/hive",
           "hcat_user" : "hcat",
           "hive_ambari_database" : "MySQL",
-          "hcat_pid_dir" : "/var/run/webhcat"
+          "hive_existing_mysql_host" : "test254-dev.cmq3trivul8e.us-west-2.rds.amazonaws.com"
         }
       }
     },
@@ -2275,11 +2334,77 @@
     {
       "ranger-hive-security" : {
         "properties_attributes" : { },
-        "properties" : { }
+        "properties" : {
+          "xasecure.hive.update.xapolicies.on.grant.revoke" : "true",
+          "ranger.plugin.hive.policy.source.impl" : "org.apache.ranger.admin.client.RangerAdminRESTClient",
+          "ranger.plugin.hive.policy.pollIntervalMs" : "30000",
+          "ranger.plugin.hive.policy.rest.ssl.config.file" : "/usr/hdp/current/{{ranger_hive_component}}/conf/conf.server/ranger-policymgr-ssl.xml",
+          "ranger.plugin.hive.policy.cache.dir" : "/etc/ranger/{{repo_name}}/policycache",
+          "ranger.plugin.hive.service.name" : "{{repo_name}}",
+          "ranger.plugin.hive.policy.rest.url" : "{{policymgr_mgr_url}}"
+        }
       }
     }
   ],
   "host_groups" : [
+    {
+      "components" : [
+        {
+          "name" : "SPARK_CLIENT"
+        },
+        {
+          "name" : "YARN_CLIENT"
+        },
+        {
+          "name" : "HDFS_CLIENT"
+        },
+        {
+          "name" : "SPARK2_CLIENT"
+        },
+        {
+          "name" : "HISTORYSERVER"
+        },
+        {
+          "name" : "METRICS_MONITOR"
+        },
+        {
+          "name" : "INFRA_SOLR_CLIENT"
+        },
+        {
+          "name" : "TEZ_CLIENT"
+        },
+        {
+          "name" : "HCAT"
+        },
+        {
+          "name" : "KAFKA_BROKER"
+        },
+        {
+          "name" : "SECONDARY_NAMENODE"
+        },
+        {
+          "name" : "HST_AGENT"
+        },
+        {
+          "name" : "MAPREDUCE2_CLIENT"
+        },
+        {
+          "name" : "ZOOKEEPER_SERVER"
+        },
+        {
+          "name" : "OOZIE_CLIENT"
+        },
+        {
+          "name" : "HIVE_CLIENT"
+        },
+        {
+          "name" : "METRICS_GRAFANA"
+        }
+      ],
+      "configurations" : [ ],
+      "name" : "host_group_2",
+      "cardinality" : "1"
+    },
     {
       "components" : [
         {
@@ -2299,6 +2424,9 @@
         },
         {
           "name" : "METRICS_MONITOR"
+        },
+        {
+          "name" : "INFRA_SOLR_CLIENT"
         },
         {
           "name" : "HIVE_METASTORE"
@@ -2338,7 +2466,89 @@
         }
       ],
       "configurations" : [ ],
-      "name" : "host_group_2",
+      "name" : "host_group_1",
+      "cardinality" : "1"
+    },
+    {
+      "components" : [
+        {
+          "name" : "NODEMANAGER"
+        },
+        {
+          "name" : "SPARK2_CLIENT"
+        },
+        {
+          "name" : "METRICS_MONITOR"
+        },
+        {
+          "name" : "INFRA_SOLR_CLIENT"
+        },
+        {
+          "name" : "TEZ_CLIENT"
+        },
+        {
+          "name" : "ZOOKEEPER_CLIENT"
+        },
+        {
+          "name" : "HCAT"
+        },
+        {
+          "name" : "HST_AGENT"
+        },
+        {
+          "name" : "SLIDER"
+        },
+        {
+          "name" : "OOZIE_CLIENT"
+        },
+        {
+          "name" : "HBASE_REGIONSERVER"
+        },
+        {
+          "name" : "METRICS_COLLECTOR"
+        },
+        {
+          "name" : "SPARK_CLIENT"
+        },
+        {
+          "name" : "YARN_CLIENT"
+        },
+        {
+          "name" : "HDFS_CLIENT"
+        },
+        {
+          "name" : "SQOOP"
+        },
+        {
+          "name" : "NAMENODE"
+        },
+        {
+          "name" : "PIG"
+        },
+        {
+          "name" : "MAPREDUCE2_CLIENT"
+        },
+        {
+          "name" : "DATANODE"
+        },
+        {
+          "name" : "HBASE_CLIENT"
+        },
+        {
+          "name" : "INFRA_SOLR"
+        },
+        {
+          "name" : "APP_TIMELINE_SERVER"
+        },
+        {
+          "name" : "HIVE_CLIENT"
+        },
+        {
+          "name" : "RESOURCEMANAGER"
+        }
+      ],
+      "configurations" : [ ],
+      "name" : "host_group_4",
       "cardinality" : "1"
     },
     {
@@ -2362,13 +2572,13 @@
           "name" : "METRICS_MONITOR"
         },
         {
+          "name" : "INFRA_SOLR_CLIENT"
+        },
+        {
           "name" : "HBASE_MASTER"
         },
         {
           "name" : "TEZ_CLIENT"
-        },
-        {
-          "name" : "ZEPPELIN_MASTER"
         },
         {
           "name" : "HCAT"
@@ -2396,137 +2606,6 @@
         },
         {
           "name" : "HIVE_CLIENT"
-        }
-      ],
-      "configurations" : [ ],
-      "name" : "host_group_1",
-      "cardinality" : "1"
-    },
-    {
-      "components" : [
-        {
-          "name" : "NODEMANAGER"
-        },
-        {
-          "name" : "SPARK_CLIENT"
-        },
-        {
-          "name" : "YARN_CLIENT"
-        },
-        {
-          "name" : "HDFS_CLIENT"
-        },
-        {
-          "name" : "SQOOP"
-        },
-        {
-          "name" : "SPARK2_CLIENT"
-        },
-        {
-          "name" : "METRICS_MONITOR"
-        },
-        {
-          "name" : "NAMENODE"
-        },
-        {
-          "name" : "TEZ_CLIENT"
-        },
-        {
-          "name" : "ZOOKEEPER_CLIENT"
-        },
-        {
-          "name" : "HCAT"
-        },
-        {
-          "name" : "PIG"
-        },
-        {
-          "name" : "HST_AGENT"
-        },
-        {
-          "name" : "MAPREDUCE2_CLIENT"
-        },
-        {
-          "name" : "SLIDER"
-        },
-        {
-          "name" : "OOZIE_CLIENT"
-        },
-        {
-          "name" : "HBASE_REGIONSERVER"
-        },
-        {
-          "name" : "DATANODE"
-        },
-        {
-          "name" : "HBASE_CLIENT"
-        },
-        {
-          "name" : "APP_TIMELINE_SERVER"
-        },
-        {
-          "name" : "HIVE_CLIENT"
-        },
-        {
-          "name" : "METRICS_COLLECTOR"
-        },
-        {
-          "name" : "RESOURCEMANAGER"
-        }
-      ],
-      "configurations" : [ ],
-      "name" : "host_group_4",
-      "cardinality" : "1"
-    },
-    {
-      "components" : [
-        {
-          "name" : "SPARK_CLIENT"
-        },
-        {
-          "name" : "YARN_CLIENT"
-        },
-        {
-          "name" : "HDFS_CLIENT"
-        },
-        {
-          "name" : "SPARK2_CLIENT"
-        },
-        {
-          "name" : "HISTORYSERVER"
-        },
-        {
-          "name" : "METRICS_MONITOR"
-        },
-        {
-          "name" : "TEZ_CLIENT"
-        },
-        {
-          "name" : "HCAT"
-        },
-        {
-          "name" : "KAFKA_BROKER"
-        },
-        {
-          "name" : "SECONDARY_NAMENODE"
-        },
-        {
-          "name" : "HST_AGENT"
-        },
-        {
-          "name" : "MAPREDUCE2_CLIENT"
-        },
-        {
-          "name" : "ZOOKEEPER_SERVER"
-        },
-        {
-          "name" : "OOZIE_CLIENT"
-        },
-        {
-          "name" : "HIVE_CLIENT"
-        },
-        {
-          "name" : "METRICS_GRAFANA"
         }
       ],
       "configurations" : [ ],
