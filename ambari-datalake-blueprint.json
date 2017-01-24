@@ -126,6 +126,7 @@
           "mapreduce.jobtracker.webinterface.trusted" : "false",
           "hadoop.security.auth_to_local" : "DEFAULT",
           "hadoop.proxyuser.root.groups" : "*",
+          "hadoop.security.key.provider.path" : "",
           "ipc.client.idlethreshold" : "8000",
           "hadoop.proxyuser.hdfs.groups" : "*",
           "fs.trash.interval" : "360",
@@ -136,17 +137,17 @@
           "hadoop.proxyuser.livy.groups" : "*",
           "hadoop.proxyuser.hbase.groups" : "*",
           "hadoop.proxyuser.hbase.hosts" : "*",
-          "hadoop.proxyuser.hive.hosts" : "%HOSTGROUP::host_group_1%",
-          "hadoop.proxyuser.root.hosts" : "datanode-65.dev.test254.datalake",
+          "hadoop.proxyuser.hive.hosts" : "*",
+          "hadoop.proxyuser.root.hosts" : "*",
           "ha.failover-controller.active-standby-elector.zk.op.retries" : "120",
           "hadoop.security.authentication" : "simple",
           "hadoop.proxyuser.hdfs.hosts" : "*",
           "ipc.client.connect.max.retries" : "50",
           "io.file.buffer.size" : "131072",
           "hadoop.proxyuser.livy.hosts" : "*",
-          "hadoop.proxyuser.oozie.hosts" : "%HOSTGROUP::host_group_1%",
-          "hadoop.proxyuser.dev_hive.hosts" : "datanode-177.dev.test254.datalake",
-          "hadoop.proxyuser.hcat.hosts" : "%HOSTGROUP::host_group_1%",
+          "hadoop.proxyuser.oozie.hosts" : "*",
+          "hadoop.proxyuser.dev_hive.hosts" : "*",
+          "hadoop.proxyuser.hcat.hosts" : "*",
           "hadoop.proxyuser.oozie.groups" : "*",
           "hadoop.proxyuser.dev_hive.groups" : "*",
           "net.topology.script.file.name" : "/etc/hadoop/conf/topology_script.py",
@@ -198,7 +199,7 @@
           "log.segment.bytes" : "1073741824",
           "offset.metadata.max.bytes" : "4096",
           "ssl.truststore.location" : "/etc/pki/java/cacerts",
-          "zookeeper.connect" : "%HOSTGROUP::host_group_3%:2181,%HOSTGROUP::host_group_1%:2181,%HOSTGROUP::host_group_2%:2181",
+          "zookeeper.connect" : "%HOSTGROUP::host_group_2%:2181,%HOSTGROUP::host_group_1%:2181,%HOSTGROUP::host_group_3%:2181",
           "port" : "6667",
           "zookeeper.sync.time.ms" : "2000",
           "num.replica.fetchers" : "1",
@@ -805,7 +806,7 @@
           "hive.vectorized.execution.mapjoin.native.enabled" : "true",
           "hive.metastore.event.listeners" : "",
           "hive.server2.tez.default.queues" : "default",
-          "hive.llap.zk.sm.connectionString" : "%HOSTGROUP::host_group_3%:2181,%HOSTGROUP::host_group_2%:2181,%HOSTGROUP::host_group_1%:2181",
+          "hive.llap.zk.sm.connectionString" : "%HOSTGROUP::host_group_2%:2181,%HOSTGROUP::host_group_3%:2181,%HOSTGROUP::host_group_1%:2181",
           "hive.server2.tez.sessions.per.default.queue" : "1",
           "hive.server2.webui.use.ssl" : "false",
           "hive.llap.management.rpc.port" : "15004",
@@ -1009,7 +1010,7 @@
           "hbase.rpc.controllerfactory.class" : "",
           "hbase.client.retries.number" : "35",
           "hbase.hstore.compaction.max" : "10",
-          "hbase.zookeeper.quorum" : "%HOSTGROUP::host_group_3%,%HOSTGROUP::host_group_1%,%HOSTGROUP::host_group_2%",
+          "hbase.zookeeper.quorum" : "%HOSTGROUP::host_group_2%,%HOSTGROUP::host_group_1%,%HOSTGROUP::host_group_3%",
           "hbase.regionserver.info.port" : "16030",
           "hbase.rpc.protection" : "authentication",
           "zookeeper.znode.parent" : "/hbase-unsecure",
@@ -1208,6 +1209,21 @@
     {
       "hdfs-site" : {
         "properties_attributes" : {
+          "dfs.webhdfs.enabled" : {
+            "final" : "true"
+          },
+          "dfs.namenode.http-address" : {
+            "final" : "true"
+          },
+          "dfs.namenode.name.dir" : {
+            "final" : "true"
+          },
+          "dfs.support.append" : {
+            "final" : "true"
+          },
+          "dfs.datanode.failed.volumes.tolerated" : {
+            "final" : "true"
+          },
           "final" : {
             "dfs.webhdfs.enabled" : "true",
             "dfs.namenode.http-address" : "true",
@@ -1215,12 +1231,16 @@
             "dfs.namenode.name.dir" : "true",
             "dfs.datanode.failed.volumes.tolerated" : "true",
             "dfs.datanode.data.dir" : "true"
+          },
+          "dfs.datanode.data.dir" : {
+            "final" : "true"
           }
         },
         "properties" : {
           "dfs.replication" : "3",
           "dfs.namenode.audit.log.async" : "true",
           "dfs.namenode.checkpoint.dir" : "/var/log/hadoop/hdfs/namesecondary",
+          "dfs.encryption.key.provider.uri" : "",
           "dfs.namenode.avoid.read.stale.datanode" : "true",
           "dfs.journalnode.http-address" : "0.0.0.0:8480",
           "nfs.file.dump.dir" : "/tmp/.hdfs-nfs",
@@ -1267,7 +1287,7 @@
           "dfs.namenode.write.stale.datanode.ratio" : "1.0f",
           "dfs.namenode.name.dir.restore" : "true",
           "dfs.heartbeat.interval" : "3",
-          "dfs.namenode.secondary.http-address" : "%HOSTGROUP::host_group_2%:50090",
+          "dfs.namenode.secondary.http-address" : "%HOSTGROUP::host_group_3%:50090",
           "dfs.namenode.checkpoint.txns" : "1000000",
           "dfs.journalnode.edits.dir" : "/hadoop/hdfs/journalnode",
           "dfs.support.append" : "true",
@@ -1282,7 +1302,7 @@
       "yarn-site" : {
         "properties_attributes" : { },
         "properties" : {
-          "yarn.resourcemanager.zk-address" : "%HOSTGROUP::host_group_3%:2181,%HOSTGROUP::host_group_1%:2181,%HOSTGROUP::host_group_2%:2181",
+          "yarn.resourcemanager.zk-address" : "%HOSTGROUP::host_group_2%:2181,%HOSTGROUP::host_group_1%:2181,%HOSTGROUP::host_group_3%:2181",
           "yarn.nodemanager.container-monitor.interval-ms" : "3000",
           "yarn.timeline-service.entity-group-fs-store.active-dir" : "/ats/active/",
           "yarn.nodemanager.linux-container-executor.group" : "hadoop",
@@ -1342,7 +1362,7 @@
           "yarn.timeline-service.ttl-ms" : "2678400000",
           "yarn.nodemanager.health-checker.script.timeout-ms" : "60000",
           "yarn.nodemanager.aux-services.spark2_shuffle.class" : "org.apache.spark.network.yarn.YarnShuffleService",
-          "yarn.log.server.url" : "http://%HOSTGROUP::host_group_2%:19888/jobhistory/logs",
+          "yarn.log.server.url" : "http://%HOSTGROUP::host_group_3%:19888/jobhistory/logs",
           "yarn.timeline-service.entity-group-fs-store.group-id-plugin-classes" : "org.apache.tez.dag.history.logging.ats.TimelineCachePluginImpl,org.apache.spark.deploy.history.yarn.plugin.SparkATSPlugin",
           "yarn.resourcemanager.address" : "%HOSTGROUP::host_group_4%:8050",
           "yarn.timeline-service.recovery.enabled" : "true",
@@ -1377,7 +1397,7 @@
           "yarn.timeline-service.leveldb-state-store.path" : "/data1/hadoop/yarn/timeline",
           "yarn.timeline-service.entity-group-fs-store.done-dir" : "/ats/done/",
           "yarn.nodemanager.disk-health-checker.max-disk-utilization-per-disk-percentage" : "90",
-          "hadoop.registry.zk.quorum" : "%HOSTGROUP::host_group_3%:2181,%HOSTGROUP::host_group_1%:2181,%HOSTGROUP::host_group_2%:2181",
+          "hadoop.registry.zk.quorum" : "%HOSTGROUP::host_group_2%:2181,%HOSTGROUP::host_group_1%:2181,%HOSTGROUP::host_group_3%:2181",
           "yarn.nodemanager.log-aggregation.roll-monitoring-interval-seconds" : "3600",
           "yarn.nodemanager.container-executor.class" : "org.apache.hadoop.yarn.server.nodemanager.DefaultContainerExecutor",
           "yarn.resourcemanager.nodes.exclude-path" : "/etc/hadoop/conf/yarn.exclude",
@@ -1764,7 +1784,7 @@
           "mapreduce.task.io.sort.mb" : "1146",
           "mapreduce.cluster.administrators" : " hadoop",
           "mapreduce.reduce.shuffle.fetch.retry.timeout-ms" : "30000",
-          "mapreduce.jobhistory.address" : "%HOSTGROUP::host_group_2%:10020",
+          "mapreduce.jobhistory.address" : "%HOSTGROUP::host_group_3%:10020",
           "mapreduce.map.sort.spill.percent" : "0.7",
           "mapreduce.map.memory.mb" : "2048",
           "mapreduce.admin.reduce.child.java.opts" : "-server -XX:NewRatio=8 -Djava.net.preferIPv4Stack=true -Dhdp.version=${hdp.version}",
@@ -1777,7 +1797,7 @@
           "mapreduce.reduce.shuffle.parallelcopies" : "30",
           "mapreduce.jobhistory.webapp.https.address" : "0.0.0.0:19890",
           "mapreduce.jobhistory.done-dir" : "/mr-history/done",
-          "mapreduce.jobhistory.webapp.address" : "%HOSTGROUP::host_group_2%:19888",
+          "mapreduce.jobhistory.webapp.address" : "%HOSTGROUP::host_group_3%:19888",
           "mapreduce.reduce.shuffle.fetch.retry.enabled" : "1",
           "mapreduce.task.io.sort.factor" : "100",
           "mapreduce.jobhistory.recovery.store.leveldb.path" : "/hadoop/mapreduce/jhs",
@@ -1879,12 +1899,13 @@
           "hive.merge.mapfiles" : "true",
           "hive.exec.post.hooks" : "org.apache.hadoop.hive.ql.hooks.ATSHook",
           "hive.server2.transport.mode" : "binary",
+          "atlas.cluster.name" : "{{cluster_name}}",
           "hive.server2.thrift.http.path" : "cliservice",
           "hive.enforce.sortmergebucketmapjoin" : "true",
           "hive.metastore.execute.setugi" : "true",
           "hive.tez.smb.number.waves" : "0.5",
           "hive.server2.authentication.spnego.keytab" : "HTTP/_HOST@EXAMPLE.COM",
-          "hive.zookeeper.quorum" : "%HOSTGROUP::host_group_1%:2181,%HOSTGROUP::host_group_2%:2181,%HOSTGROUP::host_group_3%:2181",
+          "hive.zookeeper.quorum" : "%HOSTGROUP::host_group_1%:2181,%HOSTGROUP::host_group_3%:2181,%HOSTGROUP::host_group_2%:2181",
           "hive.mapjoin.bucket.cache.size" : "10000",
           "hive.metastore.kerberos.principal" : "hive/_HOST@EXAMPLE.COM",
           "hive.tez.auto.reducer.parallelism" : "true",
@@ -1952,12 +1973,12 @@
           "hive.metastore.connect.retries" : "24",
           "hive.optimize.reducededuplication.min.reducer" : "4",
           "hive.tez.input.format" : "org.apache.hadoop.hive.ql.io.HiveInputFormat",
-          "hive.cluster.delegation.token.store.zookeeper.connectString" : "%HOSTGROUP::host_group_1%:2181,%HOSTGROUP::host_group_2%:2181,%HOSTGROUP::host_group_3%:2181",
+          "hive.cluster.delegation.token.store.zookeeper.connectString" : "%HOSTGROUP::host_group_1%:2181,%HOSTGROUP::host_group_3%:2181,%HOSTGROUP::host_group_2%:2181",
           "hive.metastore.uris" : "thrift://%HOSTGROUP::host_group_1%:9083",
           "hive.server2.max.start.attempts" : "5",
           "hive.exec.dynamic.partition.mode" : "strict",
           "hive.server2.thrift.max.worker.threads" : "500",
-          "hive.server2.use.SSL" : "true",
+          "hive.server2.use.SSL" : "false",
           "hive.tez.java.opts" : "-server -Djava.net.preferIPv4Stack=true -XX:NewRatio=8 -XX:+UseNUMA -XX:+UseParallelGC -XX:+PrintGCDetails -verbose:gc -XX:+PrintGCTimeStamps",
           "hive.exec.submit.local.task.via.child" : "true",
           "hive.optimize.null.scan" : "true",
@@ -2072,7 +2093,7 @@
       "webhcat-site" : {
         "properties_attributes" : { },
         "properties" : {
-          "templeton.zookeeper.hosts" : "%HOSTGROUP::host_group_1%:2181,%HOSTGROUP::host_group_2%:2181,%HOSTGROUP::host_group_3%:2181",
+          "templeton.zookeeper.hosts" : "%HOSTGROUP::host_group_1%:2181,%HOSTGROUP::host_group_3%:2181,%HOSTGROUP::host_group_2%:2181",
           "webhcat.proxyuser.root.groups" : "*",
           "webhcat.proxyuser.root.hosts" : "datanode-65.dev.test254.datalake",
           "templeton.hadoop.queue.name" : "default",
@@ -2359,10 +2380,10 @@
           "name" : "HDFS_CLIENT"
         },
         {
-          "name" : "SPARK2_CLIENT"
+          "name" : "HST_SERVER"
         },
         {
-          "name" : "HISTORYSERVER"
+          "name" : "SPARK2_CLIENT"
         },
         {
           "name" : "METRICS_MONITOR"
@@ -2371,16 +2392,16 @@
           "name" : "INFRA_SOLR_CLIENT"
         },
         {
+          "name" : "HBASE_MASTER"
+        },
+        {
           "name" : "TEZ_CLIENT"
         },
         {
           "name" : "HCAT"
         },
         {
-          "name" : "KAFKA_BROKER"
-        },
-        {
-          "name" : "SECONDARY_NAMENODE"
+          "name" : "SPARK2_JOBHISTORYSERVER"
         },
         {
           "name" : "HST_AGENT"
@@ -2395,10 +2416,16 @@
           "name" : "OOZIE_CLIENT"
         },
         {
-          "name" : "HIVE_CLIENT"
+          "name" : "AMBARI_SERVER"
         },
         {
-          "name" : "METRICS_GRAFANA"
+          "name" : "DATANODE"
+        },
+        {
+          "name" : "SPARK_JOBHISTORYSERVER"
+        },
+        {
+          "name" : "HIVE_CLIENT"
         }
       ],
       "configurations" : [ ],
@@ -2457,6 +2484,9 @@
         },
         {
           "name" : "OOZIE_CLIENT"
+        },
+        {
+          "name" : "DATANODE"
         },
         {
           "name" : "OOZIE_SERVER"
@@ -2563,10 +2593,10 @@
           "name" : "HDFS_CLIENT"
         },
         {
-          "name" : "HST_SERVER"
+          "name" : "SPARK2_CLIENT"
         },
         {
-          "name" : "SPARK2_CLIENT"
+          "name" : "HISTORYSERVER"
         },
         {
           "name" : "METRICS_MONITOR"
@@ -2575,16 +2605,16 @@
           "name" : "INFRA_SOLR_CLIENT"
         },
         {
-          "name" : "HBASE_MASTER"
-        },
-        {
           "name" : "TEZ_CLIENT"
         },
         {
           "name" : "HCAT"
         },
         {
-          "name" : "SPARK2_JOBHISTORYSERVER"
+          "name" : "KAFKA_BROKER"
+        },
+        {
+          "name" : "SECONDARY_NAMENODE"
         },
         {
           "name" : "HST_AGENT"
@@ -2599,13 +2629,13 @@
           "name" : "OOZIE_CLIENT"
         },
         {
-          "name" : "AMBARI_SERVER"
-        },
-        {
-          "name" : "SPARK_JOBHISTORYSERVER"
+          "name" : "DATANODE"
         },
         {
           "name" : "HIVE_CLIENT"
+        },
+        {
+          "name" : "METRICS_GRAFANA"
         }
       ],
       "configurations" : [ ],
